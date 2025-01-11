@@ -31,7 +31,12 @@ def setup():
         style="{",
         datefmt="%d-%m-%Y %H:%M:%S",
         level=logging.INFO,
-        handlers=[logging.StreamHandler(), TimedRotatingFileHandler(constants.LOG_FILE_PATH, when="D", backupCount=3, utc=True)],
+        handlers=[
+            logging.StreamHandler(),
+            TimedRotatingFileHandler(
+                constants.LOG_FILE_PATH, when="D", backupCount=3, utc=True
+            ),
+        ],
     )
 
     # matplotlib and seaborn
@@ -64,7 +69,10 @@ async def main():
     intents.members = True
     intents.message_content = True
 
-    bot = commands.Bot(command_prefix=commands.when_mentioned_or(discord_common._BOT_PREFIX), intents=intents)
+    bot = commands.Bot(
+        command_prefix=commands.when_mentioned_or(discord_common._BOT_PREFIX),
+        intents=intents,
+    )
     bot.help_command = discord_common.TleHelp()
     cogs = [file.stem for file in Path("tle", "cogs").glob("*.py")]
     for extension in cogs:

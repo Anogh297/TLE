@@ -12,17 +12,17 @@ class TaskError(commands.CommandError):
 
 class WaiterRequired(TaskError):
     def __init__(self, name):
-        super().__init__(f'No waiter set for task `{name}`')
+        super().__init__(f"No waiter set for task `{name}`")
 
 
 class TaskAlreadyRunning(TaskError):
     def __init__(self, name):
-        super().__init__(f'Attempt to start task `{name}` which is already running')
+        super().__init__(f"Attempt to start task `{name}` which is already running")
 
 
 def _ensure_coroutine_func(func):
     if not asyncio.iscoroutinefunction(func):
-        raise TypeError('The decorated function must be a coroutine function.')
+        raise TypeError("The decorated function must be a coroutine function.")
 
 
 class Waiter:
@@ -130,22 +130,24 @@ class Task:
             raise WaiterRequired(self.name)
         if self.running:
             raise TaskAlreadyRunning(self.name)
-        self.logger.info(f'Starting up task `{self.name}`.')
+        self.logger.info(f"Starting up task `{self.name}`.")
         self.asyncio_task = asyncio.create_task(self._task())
 
     async def manual_trigger(self, arg=None):
         """Manually triggers the `func` with the optionally provided `arg`, which defaults to
         `None`.
         """
-        self.logger.info(f'Manually triggering task `{self.name}`.')
+        self.logger.info(f"Manually triggering task `{self.name}`.")
         await self._execute_func(arg)
 
     async def stop(self):
         """Stops the task, interrupting the currently running coroutines."""
         if self.running:
-            self.logger.info(f'Stopping task `{self.name}`.')
+            self.logger.info(f"Stopping task `{self.name}`.")
             self.asyncio_task.cancel()
-            await asyncio.sleep(0)  # To ensure cancellation if called from within the task itself.
+            await asyncio.sleep(
+                0
+            )  # To ensure cancellation if called from within the task itself.
 
     async def _task(self):
         arg = None
@@ -164,7 +166,9 @@ class Task:
         except asyncio.CancelledError:
             raise
         except Exception as ex:
-            self.logger.warning(f'Exception in task `{self.name}`, ignoring.', exc_info=True)
+            self.logger.warning(
+                f"Exception in task `{self.name}`, ignoring.", exc_info=True
+            )
             if self._exception_handler is not None:
                 await self._exception_handler.handle(ex, self.instance)
 
@@ -187,7 +191,9 @@ class TaskSpec:
         """
 
         def decorator(func):
-            self._waiter = Waiter(func, run_first=run_first, needs_instance=needs_instance)
+            self._waiter = Waiter(
+                func, run_first=run_first, needs_instance=needs_instance
+            )
             return func
 
         return decorator
@@ -198,7 +204,9 @@ class TaskSpec:
         """
 
         def decorator(func):
-            self._exception_handler = ExceptionHandler(func, needs_instance=needs_instance)
+            self._exception_handler = ExceptionHandler(
+                func, needs_instance=needs_instance
+            )
             return func
 
         return decorator
@@ -207,12 +215,17 @@ class TaskSpec:
         if instance is None:
             return self
         try:
-            tasks = getattr(instance, '___tasks___')
+            tasks = getattr(instance, "___tasks___")
         except AttributeError:
             tasks = instance.___tasks___ = {}
         if self.name not in tasks:
-            tasks[self.name] = Task(self.name, self.func, self._waiter, self._exception_handler,
-                                    instance=instance)
+            tasks[self.name] = Task(
+                self.name,
+                self.func,
+                self._waiter,
+                self._exception_handler,
+                instance=instance,
+            )
         return tasks[self.name]
 
 

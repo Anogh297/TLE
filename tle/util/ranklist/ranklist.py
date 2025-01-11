@@ -14,18 +14,22 @@ class RanklistError(commands.CommandError):
 
 class ContestNotRatedError(RanklistError):
     def __init__(self, contest):
-        super().__init__(contest, f'`{contest.name}` is not rated')
+        super().__init__(contest, f"`{contest.name}` is not rated")
 
 
 class HandleNotPresentError(RanklistError):
     def __init__(self, contest, handle):
-        super().__init__(contest, f'Handle `{handle}`` not present in standings of `{contest.name}`')
+        super().__init__(
+            contest, f"Handle `{handle}`` not present in standings of `{contest.name}`"
+        )
         self.handle = handle
 
 
 class DeltasNotPresentError(RanklistError):
     def __init__(self, contest):
-        super().__init__(contest, f'Rating changes for `{contest.name}` not calculated or set.')
+        super().__init__(
+            contest, f"Rating changes for `{contest.name}` not calculated or set."
+        )
 
 
 class Ranklist:
@@ -64,9 +68,13 @@ class Ranklist:
             if handle in self.delta_by_handle:
                 current_score = (contestant.points, contestant.penalty)
                 standings_row = self.standing_by_id[handle]._asdict()
-                standings_row['rank'] = current_rated_rank if current_score != last_rated_score else last_rated_rank
+                standings_row["rank"] = (
+                    current_rated_rank
+                    if current_score != last_rated_score
+                    else last_rated_rank
+                )
                 official_standings.append(make_from_dict(RanklistRow, standings_row))
-                last_rated_rank = standings_row['rank']
+                last_rated_rank = standings_row["rank"]
                 last_rated_score = current_score
                 current_rated_rank += 1
 
@@ -77,16 +85,21 @@ class Ranklist:
         if not self.is_rated:
             raise ContestNotRatedError(self.contest)
         self.delta_by_handle = delta_by_handle.copy()
-        self.deltas_status = 'Final'
+        self.deltas_status = "Final"
 
     def predict(self, current_rating):
         if not self.is_rated:
             raise ContestNotRatedError(self.contest)
-        standings = [(id_, row.points, row.penalty, current_rating[id_])
-                     for id_, row in self.standing_by_id.items() if id_ in current_rating]
+        standings = [
+            (id_, row.points, row.penalty, current_rating[id_])
+            for id_, row in self.standing_by_id.items()
+            if id_ in current_rating
+        ]
         if standings:
-            self.delta_by_handle = CodeforcesRatingCalculator(standings).calculate_rating_changes()
-        self.deltas_status = 'Predicted'
+            self.delta_by_handle = CodeforcesRatingCalculator(
+                standings
+            ).calculate_rating_changes()
+        self.deltas_status = "Predicted"
 
     def get_delta(self, handle):
         if not self.is_rated:
