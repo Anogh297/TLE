@@ -120,6 +120,7 @@ class Starboard(commands.Cog):
 
     @starboard.command(brief="Set starboard to current channel")
     @commands.has_role(constants.TLE_ADMIN)
+    @constants.is_me()
     async def here(self, ctx):
         """Set the current channel as starboard."""
         res = cf_common.user_db.get_starboard(ctx.guild.id)
@@ -133,6 +134,7 @@ class Starboard(commands.Cog):
 
     @starboard.command(brief="Clear starboard settings")
     @commands.has_role(constants.TLE_ADMIN)
+    @constants.is_me()
     async def clear(self, ctx):
         """Stop tracking starboard messages and remove the currently set starboard channel
         from settings."""
@@ -142,6 +144,7 @@ class Starboard(commands.Cog):
 
     @starboard.command(brief="Remove a message from starboard")
     @commands.has_role(constants.TLE_ADMIN)
+    @constants.is_me()
     async def remove(self, ctx, original_message_id: int):
         """Remove a particular message from the starboard database."""
         rc = cf_common.user_db.remove_starboard_message(

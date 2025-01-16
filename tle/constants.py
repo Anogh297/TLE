@@ -1,4 +1,6 @@
 import os
+from discord.ext import commands
+
 
 DATA_DIR = "data"
 LOGS_DIR = "logs"
@@ -28,3 +30,10 @@ ALL_DIRS = (
 
 TLE_ADMIN = os.environ.get("TLE_ADMIN", "Admin")
 TLE_MODERATOR = os.environ.get("TLE_MODERATOR", "Moderator")
+
+OWNER = os.environ.get("BOT_OWNER")
+
+def is_me():
+    def predicate(ctx):
+        return ctx.message.author.id == OWNER
+    return commands.check(predicate)

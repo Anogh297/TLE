@@ -269,6 +269,7 @@ class Contests(commands.Cog):
 
     @remind.command(brief="Set reminder settings")
     @commands.has_role(constants.TLE_ADMIN)
+    @constants.is_me()
     async def here(self, ctx, role: discord.Role, *before: int):
         """Sets reminder channel to current channel, role to the given role, and reminder
         times to the given values in minutes."""
@@ -287,6 +288,7 @@ class Contests(commands.Cog):
 
     @remind.command(brief="Clear all reminder settings")
     @commands.has_role(constants.TLE_ADMIN)
+    @constants.is_me()
     async def clear(self, ctx):
         cf_common.user_db.clear_reminder_settings(ctx.guild.id)
         await ctx.send(embed=discord_common.embed_success("Reminder settings cleared"))
@@ -891,6 +893,7 @@ class Contests(commands.Cog):
 
     @commands.command(brief="Set the rated vc channel to the current channel")
     @commands.has_role(constants.TLE_ADMIN)
+    @constants.is_me()
     async def set_ratedvc_channel(self, ctx):
         """Sets the rated vc channel to the current channel."""
         cf_common.user_db.set_rated_vc_channel(ctx.guild.id, ctx.channel.id)

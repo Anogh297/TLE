@@ -56,6 +56,7 @@ class Meta(commands.Cog):
 
     @meta.command(brief="Restarts TLE")
     @commands.has_role(constants.TLE_ADMIN)
+    @constants.is_me()
     async def restart(self, ctx):
         """Restarts the bot."""
         # Really, we just exit with a special code
@@ -65,6 +66,7 @@ class Meta(commands.Cog):
 
     @meta.command(brief="Kill TLE")
     @commands.has_role(constants.TLE_ADMIN)
+    @constants.is_me()
     async def kill(self, ctx):
         """Restarts the bot."""
         await ctx.send("Dying...")
@@ -97,6 +99,7 @@ class Meta(commands.Cog):
 
     @meta.command(brief="Print bot guilds")
     @commands.has_role(constants.TLE_ADMIN)
+    @constants.is_me()
     async def guilds(self, ctx):
         "Replies with info on the bot's guilds"
         msg = [

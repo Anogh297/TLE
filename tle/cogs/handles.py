@@ -113,9 +113,7 @@ def get_gudgitters_image(rankings):
     context.rectangle(0, 0, WIDTH, HEIGHT)
     context.fill()
     layout = PangoCairo.create_layout(context)
-    layout.set_font_description(
-        Pango.font_description_from_string(",".join(FONTS) + " 20")
-    )
+    layout.set_font_description(Pango.font_description_from_string(",".join(FONTS) + " 20"))
     layout.set_ellipsize(Pango.EllipsizeMode.END)
 
     def draw_bg(y, color_index):
@@ -285,9 +283,7 @@ class Handles(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.font = ImageFont.truetype(
-            constants.NOTO_SANS_CJK_BOLD_FONT_PATH, size=26
-        )  # font for ;handle pretty
+        self.font = ImageFont.truetype(constants.NOTO_SANS_CJK_BOLD_FONT_PATH, size=26)  # font for ;handle pretty
         self.converter = commands.MemberConverter()
 
     @commands.Cog.listener()
@@ -302,14 +298,12 @@ class Handles(commands.Cog):
 
     @commands.command(brief="update status, mark guild members as active")
     @commands.has_role(constants.TLE_ADMIN)
+    @constants.is_me()
     async def _updatestatus(self, ctx):
         gid = ctx.guild.id
         active_ids = [m.id for m in ctx.guild.members]
         cf_common.user_db.reset_status(gid)
-        rc = sum(
-            cf_common.user_db.update_status(gid, chunk)
-            for chunk in paginator.chunkify(active_ids, 100)
-        )
+        rc = sum(cf_common.user_db.update_status(gid, chunk) for chunk in paginator.chunkify(active_ids, 100))
         await ctx.send(f"{rc} members active with handle")
 
     @commands.Cog.listener()
@@ -328,11 +322,7 @@ class Handles(commands.Cog):
         to_set_inactive = []
         for guild in self.bot.guilds:
             user_id_handle_pairs = cf_common.user_db.get_handles_for_guild(guild.id)
-            to_set_inactive += [
-                (guild.id, user_id)
-                for user_id, _ in user_id_handle_pairs
-                if guild.get_member(user_id) is None
-            ]
+            to_set_inactive += [(guild.id, user_id) for user_id, _ in user_id_handle_pairs if guild.get_member(user_id) is None]
         cf_common.user_db.set_inactive(to_set_inactive)
 
     @events.listener_spec(
@@ -362,9 +352,7 @@ class Handles(commands.Cog):
         )
         self.logger.info(f"All guilds updated for contest {contest.id}.")
 
-    @commands.group(
-        brief="Commands that have to do with handles", invoke_without_command=True
-    )
+    @commands.group(brief="Commands that have to do with handles", invoke_without_command=True)
     async def handle(self, ctx):
         """Change or collect information about specific handles on Codeforces"""
         await ctx.send_help(ctx.command)
@@ -410,36 +398,27 @@ class Handles(commands.Cog):
         try:
             cf_common.user_db.set_handle(member.id, ctx.guild.id, handle)
         except db.UniqueConstraintFailed:
-            raise HandleCogError(
-                f"The handle `{handle}` is already associated with another user."
-            )
+            raise HandleCogError(f"The handle `{handle}` is already associated with another user.")
         rc = cf_common.user_db.cache_cf_user(user)
         if rc != 1:
             raise HandleCogError("DB update for user {user.handle} failed.")
 
         roles = [role for role in ctx.guild.roles if role.name == user.rank.title]
         if not roles:
-            raise HandleCogError(
-                f"Role for rank `{user.rank.title}` not present in the server"
-            )
+            raise HandleCogError(f"Role for rank `{user.rank.title}` not present in the server")
         role_to_assign = roles[0]
-        await self.update_member_rank_role(
-            member, role_to_assign, reason="New handle set for user"
-        )
+        await self.update_member_rank_role(member, role_to_assign, reason="New handle set for user")
 
     @handle.command(brief="Identify yourself", usage="[handle]")
     @cf_common.user_guard(
         group="handle",
-        get_exception=lambda: HandleCogError(
-            "Identification is already running for you"
-        ),
+        get_exception=lambda: HandleCogError("Identification is already running for you"),
     )
     async def identify(self, ctx, handle: str):
         """Link a codeforces account to discord account by submitting a compile error to a random problem"""
         if cf_common.user_db.get_handle(ctx.author.id, ctx.guild.id):
             raise HandleCogError(
-                f"{ctx.author.mention}, you cannot identify when your handle is "
-                "already set. Ask an Admin or Moderator if you wish to change it"
+                f"{ctx.author.mention}, you cannot identify when your handle is " "already set. Ask an Admin or Moderator if you wish to change it"
             )
 
         if cf_common.user_db.get_user_id(handle, ctx.guild.id):
@@ -453,11 +432,7 @@ class Handles(commands.Cog):
         users = await cf.user.info(handles=[handle])
         invoker = str(ctx.author)
         handle = users[0].handle
-        problems = [
-            prob
-            for prob in cf_common.cache2.problem_cache.problems
-            if prob.rating <= 1200
-        ]
+        problems = [prob for prob in cf_common.cache2.problem_cache.problems if prob.rating <= 1200]
         problem = random.choice(problems)
         await ctx.send(
             f"`{invoker}`, submit a compile error to <{problem.url}> within 60 seconds (this will show the bot that you have access to the account)"
@@ -466,10 +441,7 @@ class Handles(commands.Cog):
             await asyncio.sleep(15)
 
             subs = await cf.user.status(handle=handle, count=5)
-            if any(
-                sub.problem.name == problem.name and sub.verdict == "COMPILATION_ERROR"
-                for sub in subs
-            ):
+            if any(sub.problem.name == problem.name and sub.verdict == "COMPILATION_ERROR" for sub in subs):
                 (user,) = await cf.user.info(handles=[handle])
                 await self._set(ctx, ctx.author, user)
                 embed = _make_profile_embed(ctx.author, user, mode="set")
@@ -494,9 +466,7 @@ class Handles(commands.Cog):
         """Show Discord username of a cf handle."""
         user_id = cf_common.user_db.get_user_id(handle, ctx.guild.id)
         if not user_id:
-            raise HandleCogError(
-                f"Discord username for `{handle}` not found in database"
-            )
+            raise HandleCogError(f"Discord username for `{handle}` not found in database")
         user = cf_common.user_db.fetch_cf_user(handle)
         member = ctx.guild.get_member(user_id)
         if member is None:
@@ -515,9 +485,7 @@ class Handles(commands.Cog):
 
         cf_common.user_db.remove_handle(handle, ctx.guild.id)
         member = ctx.guild.get_member(user_id)
-        await self.update_member_rank_role(
-            member, role_to_assign=None, reason="Handle unlinked"
-        )
+        await self.update_member_rank_role(member, role_to_assign=None, reason="Handle unlinked")
         embed = discord_common.embed_success(f"Removed {handle} from database")
         await ctx.send(embed=embed)
 
@@ -546,10 +514,7 @@ class Handles(commands.Cog):
 
     async def _unmagic_handles(self, ctx, handles, rev_lookup):
         handle_cf_user_mapping = await cf.resolve_redirects(handles)
-        mapping = {
-            (rev_lookup[handle], handle): cf_user
-            for handle, cf_user in handle_cf_user_mapping.items()
-        }
+        mapping = {(rev_lookup[handle], handle): cf_user for handle, cf_user in handle_cf_user_mapping.items()}
         summary_embed = await self._fix_and_report(ctx, mapping)
         await ctx.send(embed=summary_embed)
 
@@ -592,9 +557,7 @@ class Handles(commands.Cog):
                 try:
                     division = int(arg[3])
                     if division < 1 or division > 3:
-                        raise HandleCogError(
-                            "Division number must be within range [1-3]"
-                        )
+                        raise HandleCogError("Division number must be within range [1-3]")
                 except ValueError:
                     raise HandleCogError(f"{arg} is an invalid div argument")
             if arg == "+all":
@@ -620,10 +583,7 @@ class Handles(commands.Cog):
                 if division is not None:
                     if rating is None:
                         continue
-                    if (
-                        rating < _DIVISION_RATING_LOW[division - 1]
-                        or rating > _DIVISION_RATING_HIGH[division - 1]
-                    ):
+                    if rating < _DIVISION_RATING_LOW[division - 1] or rating > _DIVISION_RATING_HIGH[division - 1]:
                         continue
 
                 rankings.append((index, discord_handle, handle, rating, score))
@@ -632,18 +592,12 @@ class Handles(commands.Cog):
                 break
 
         if not rankings:
-            raise HandleCogError(
-                "No one has completed a gitgud challenge, send ;gitgud to request and ;gotgud to mark it as complete"
-            )
+            raise HandleCogError("No one has completed a gitgud challenge, send ;gitgud to request and ;gotgud to mark it as complete")
         discord_file = get_gudgitters_image(rankings)
         await ctx.send(file=discord_file)
 
     def filter_rating_changes(self, rating_changes):
-        rating_changes = [
-            change
-            for change in rating_changes
-            if self.dlo <= change.ratingUpdateTimeSeconds < self.dhi
-        ]
+        rating_changes = [change for change in rating_changes if self.dlo <= change.ratingUpdateTimeSeconds < self.dhi]
         return rating_changes
 
     @commands.command(
@@ -675,9 +629,7 @@ class Handles(commands.Cog):
                 try:
                     division = int(arg[3])
                     if division < 1 or division > 3:
-                        raise HandleCogError(
-                            "Division number must be within range [1-3]"
-                        )
+                        raise HandleCogError("Division number must be within range [1-3]")
                 except ValueError:
                     raise HandleCogError(f"{arg} is an invalid div argument")
             if arg == "+all":
@@ -692,20 +644,14 @@ class Handles(commands.Cog):
             if len(entry) >= 3:
                 score = cfc._calculateGitgudScoreForDelta(int(entry[1]))
                 # @@ add finish time constraint (both times need to be within the more points range)
-                res[entry[0]] += (
-                    2 * score
-                    if morePointsActive and int(entry[2]) >= morePointsTime
-                    else score
-                )
+                res[entry[0]] += 2 * score if morePointsActive and int(entry[2]) >= morePointsTime else score
             else:
                 raise HandleCogError(f"Tuple size {len(entry)} for entry {entry[0]}")
 
         rankings = []
         index = 0
         cache = cf_common.cache2.rating_changes_cache
-        for user_id, score in sorted(
-            res.items(), key=lambda item: item[1], reverse=True
-        ):
+        for user_id, score in sorted(res.items(), key=lambda item: item[1], reverse=True):
             member = ctx.guild.get_member(int(user_id))
             if not showall and member is None:
                 continue
@@ -723,11 +669,7 @@ class Handles(commands.Cog):
                 #### Live checking of a rating is not working since we get rate limited
                 #### Taking stuff from cache instead
                 rating_changes = cache.get_rating_changes_for_handle(handle)
-                rating_changes = [
-                    change
-                    for change in rating_changes
-                    if change.ratingUpdateTimeSeconds < start_time
-                ]
+                rating_changes = [change for change in rating_changes if change.ratingUpdateTimeSeconds < start_time]
                 rating_changes.sort(key=lambda a: a.ratingUpdateTimeSeconds)
                 if len(rating_changes) < 1:
                     continue
@@ -735,10 +677,8 @@ class Handles(commands.Cog):
                     continue
                 if division is not None:
                     if (
-                        rating_changes[-1].newRating
-                        < _DIVISION_RATING_LOW[division - 1]
-                        or rating_changes[-1].newRating
-                        > _DIVISION_RATING_HIGH[division - 1]
+                        rating_changes[-1].newRating < _DIVISION_RATING_LOW[division - 1]
+                        or rating_changes[-1].newRating > _DIVISION_RATING_HIGH[division - 1]
                     ):
                         continue
                 rating = rating_changes[-1].newRating
@@ -748,9 +688,7 @@ class Handles(commands.Cog):
                 break
 
         if not rankings:
-            raise HandleCogError(
-                "No one has completed a gitgud challenge, send ;gitgud to request and ;gotgud to mark it as complete"
-            )
+            raise HandleCogError("No one has completed a gitgud challenge, send ;gitgud to request and ;gotgud to mark it as complete")
         discord_file = get_gudgitters_image(rankings)
         await ctx.send(file=discord_file)
 
@@ -768,17 +706,11 @@ class Handles(commands.Cog):
             for user_id, cf_user in res
             if not countries or cf_user.country in countries
         ]
-        users = [
-            (member, handle, rating)
-            for member, handle, rating in users
-            if member is not None
-        ]
+        users = [(member, handle, rating) for member, handle, rating in users if member is not None]
         if not users:
             raise HandleCogError("No members with registered handles.")
 
-        users.sort(
-            key=lambda x: (1 if x[2] is None else -x[2], x[1])
-        )  # Sorting by (-rating, handle)
+        users.sort(key=lambda x: (1 if x[2] is None else -x[2], x[1]))  # Sorting by (-rating, handle)
         title = "Handles of server members"
         if countries:
             title += " from " + ", ".join(f"`{country}`" for country in countries)
@@ -797,9 +729,7 @@ class Handles(commands.Cog):
         ratings, in color.
         """
         user_id_cf_user_pairs = cf_common.user_db.get_cf_users_for_guild(ctx.guild.id)
-        user_id_cf_user_pairs.sort(
-            key=lambda p: p[1].rating if p[1].rating is not None else -1, reverse=True
-        )
+        user_id_cf_user_pairs.sort(key=lambda p: p[1].rating if p[1].rating is not None else -1, reverse=True)
         rows = []
         author_idx = None
         for user_id, cf_user in user_id_cf_user_pairs:
@@ -815,9 +745,7 @@ class Handles(commands.Cog):
             raise HandleCogError("No members with registered handles.")
         max_page = math.ceil(len(rows) / _PRETTY_HANDLES_PER_PAGE) - 1
         if author_idx is None and page_no is None:
-            raise HandleCogError(
-                f"Please specify a page number between 0 and {max_page}."
-            )
+            raise HandleCogError(f"Please specify a page number between 0 and {max_page}.")
 
         msg = None
         if page_no is not None:
@@ -849,12 +777,8 @@ class Handles(commands.Cog):
         await self._update_ranks(guild, res)
 
     async def _update_ranks(self, guild, res):
-        member_handles = [
-            (guild.get_member(user_id), handle) for user_id, handle in res
-        ]
-        member_handles = [
-            (member, handle) for member, handle in member_handles if member is not None
-        ]
+        member_handles = [(guild.get_member(user_id), handle) for user_id, handle in res]
+        member_handles = [(member, handle) for member, handle in member_handles if member is not None]
         if not member_handles:
             raise HandleCogError("Handles not set for any user")
         members, handles = zip(*member_handles)
@@ -865,22 +789,16 @@ class Handles(commands.Cog):
                 raise HandleCogError("DB update for user {user.handle} failed.")
 
         required_roles = {user.rank.title for user in users}
-        rank2role = {
-            role.name: role for role in guild.roles if role.name in required_roles
-        }
+        rank2role = {role.name: role for role in guild.roles if role.name in required_roles}
         missing_roles = required_roles - rank2role.keys()
         if missing_roles:
             roles_str = ", ".join(f"`{role}`" for role in missing_roles)
             plural = "s" if len(missing_roles) > 1 else ""
-            raise HandleCogError(
-                f"Role{plural} for rank{plural} {roles_str} not present in the server"
-            )
+            raise HandleCogError(f"Role{plural} for rank{plural} {roles_str} not present in the server")
 
         for member, user in zip(members, users):
             role_to_assign = rank2role[user.rank.title]
-            await self.update_member_rank_role(
-                member, role_to_assign, reason="Codeforces rank update"
-            )
+            await self.update_member_rank_role(member, role_to_assign, reason="Codeforces rank update")
 
     @staticmethod
     def _make_rankup_embeds(guild, contest, change_by_handle):
@@ -888,10 +806,7 @@ class Handles(commands.Cog):
         of this guild.
         """
         user_id_handle_pairs = cf_common.user_db.get_handles_for_guild(guild.id)
-        member_handle_pairs = [
-            (guild.get_member(user_id), handle)
-            for user_id, handle in user_id_handle_pairs
-        ]
+        member_handle_pairs = [(guild.get_member(user_id), handle) for user_id, handle in user_id_handle_pairs]
 
         def ispurg(member):
             # TODO: temporary code, todo properly later
@@ -903,10 +818,7 @@ class Handles(commands.Cog):
             if member is not None and handle in change_by_handle and not ispurg(member)
         ]
         if not member_change_pairs:
-            raise HandleCogError(
-                f"Contest `{contest.id} | {contest.name}` was not rated for any "
-                "member of this server."
-            )
+            raise HandleCogError(f"Contest `{contest.id} | {contest.name}` was not rated for any " "member of this server.")
 
         member_change_pairs.sort(key=lambda pair: pair[1].newRating, reverse=True)
         rank_to_role = {role.name: role for role in guild.roles}
@@ -919,10 +831,7 @@ class Handles(commands.Cog):
         rank_changes_str = []
         for member, change in member_change_pairs:
             cache = cf_common.cache2.rating_changes_cache
-            if (
-                change.oldRating == 1500
-                and len(cache.get_rating_changes_for_handle(change.handle)) == 1
-            ):
+            if change.oldRating == 1500 and len(cache.get_rating_changes_for_handle(change.handle)) == 1:
                 # If this is the user's first rated contest.
                 old_role = "Unrated"
             else:
@@ -930,14 +839,11 @@ class Handles(commands.Cog):
             new_role = rating_to_displayable_rank(change.newRating)
             if new_role != old_role:
                 rank_change_str = (
-                    f"{member.mention} [{change.handle}]({cf.PROFILE_BASE_URL}{change.handle}): {old_role} "
-                    f"\N{LONG RIGHTWARDS ARROW} {new_role}"
+                    f"{member.mention} [{change.handle}]({cf.PROFILE_BASE_URL}{change.handle}): {old_role} " f"\N{LONG RIGHTWARDS ARROW} {new_role}"
                 )
                 rank_changes_str.append(rank_change_str)
 
-        member_change_pairs.sort(
-            key=lambda pair: pair[1].newRating - pair[1].oldRating, reverse=True
-        )
+        member_change_pairs.sort(key=lambda pair: pair[1].newRating - pair[1].oldRating, reverse=True)
         top_increases_str = []
         for member, change in member_change_pairs[:_TOP_DELTAS_COUNT]:
             delta = change.newRating - change.oldRating
@@ -948,24 +854,18 @@ class Handles(commands.Cog):
             )
             top_increases_str.append(increase_str)
 
-        rank_changes_str = rank_changes_str or ["No rank changes"]
+        # rank_changes_str = rank_changes_str or ["No rank changes"]
+        if rank_changes_str != []:
+            for rank_changes_chunk in paginator.chunkify(rank_changes_str, _MAX_RATING_CHANGES_PER_EMBED):
+                desc = "\n".join(rank_changes_chunk)
+                embed = discord.Embed(description=desc)
+                embeds.append(embed)
 
-        embed_heading = discord.Embed(
-            title=contest.name, url=contest.url, description=""
-        )
+        embed_heading = discord.Embed(title=contest.name, url=contest.url, description="")
         embed_heading.set_author(name="Rank updates")
         embeds = [embed_heading]
 
-        for rank_changes_chunk in paginator.chunkify(
-            rank_changes_str, _MAX_RATING_CHANGES_PER_EMBED
-        ):
-            desc = "\n".join(rank_changes_chunk)
-            embed = discord.Embed(description=desc)
-            embeds.append(embed)
-
-        top_rating_increases_embed = discord.Embed(
-            description="\n".join(top_increases_str) or "Nobody got a delta :("
-        )
+        top_rating_increases_embed = discord.Embed(description="\n".join(top_increases_str) or "Nobody got a delta :(")
         top_rating_increases_embed.set_author(name="Top rating changes")
 
         embeds.append(top_rating_increases_embed)
@@ -983,9 +883,7 @@ class Handles(commands.Cog):
     async def now(self, ctx):
         """Updates Codeforces rank roles for every member in this server."""
         await self._update_ranks_all(ctx.guild)
-        await ctx.send(
-            embed=discord_common.embed_success("Roles updated successfully.")
-        )
+        await ctx.send(embed=discord_common.embed_success("Roles updated successfully."))
 
     @roleupdate.command(brief="Enable or disable auto role updates", usage="on|off")
     @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)
@@ -998,22 +896,16 @@ class Handles(commands.Cog):
             rc = cf_common.user_db.enable_auto_role_update(ctx.guild.id)
             if not rc:
                 raise HandleCogError("Auto role update is already enabled.")
-            await ctx.send(
-                embed=discord_common.embed_success("Auto role updates enabled.")
-            )
+            await ctx.send(embed=discord_common.embed_success("Auto role updates enabled."))
         elif arg == "off":
             rc = cf_common.user_db.disable_auto_role_update(ctx.guild.id)
             if not rc:
                 raise HandleCogError("Auto role update is already disabled.")
-            await ctx.send(
-                embed=discord_common.embed_success("Auto role updates disabled.")
-            )
+            await ctx.send(embed=discord_common.embed_success("Auto role updates disabled."))
         else:
             raise ValueError(f"arg must be 'on' or 'off', got '{arg}' instead.")
 
-    @roleupdate.command(
-        brief="Publish a rank update for the given contest", usage="here|off|contest_id"
-    )
+    @roleupdate.command(brief="Publish a rank update for the given contest", usage="here|off|contest_id")
     @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)
     async def publish(self, ctx, arg):
         """This is a feature to publish a summary of rank changes and top rating
@@ -1024,25 +916,17 @@ class Handles(commands.Cog):
         """
         if arg == "here":
             cf_common.user_db.set_rankup_channel(ctx.guild.id, ctx.channel.id)
-            await ctx.send(
-                embed=discord_common.embed_success(
-                    "Auto rank update publishing enabled."
-                )
-            )
+            await ctx.send(embed=discord_common.embed_success("Auto rank update publishing enabled."))
         elif arg == "off":
             rc = cf_common.user_db.clear_rankup_channel(ctx.guild.id)
             if not rc:
                 raise HandleCogError("Rank update publishing is already disabled.")
-            await ctx.send(
-                embed=discord_common.embed_success("Rank update publishing disabled.")
-            )
+            await ctx.send(embed=discord_common.embed_success("Rank update publishing disabled."))
         else:
             try:
                 contest_id = int(arg)
             except ValueError:
-                raise ValueError(
-                    f"arg must be 'here', 'off' or a contest ID, got '{arg}' instead."
-                )
+                raise ValueError(f"arg must be 'here', 'off' or a contest ID, got '{arg}' instead.")
             await self._publish_now(ctx, contest_id)
 
     async def _publish_now(self, ctx, contest_id):
@@ -1051,18 +935,13 @@ class Handles(commands.Cog):
         except cache_system2.ContestNotFound as e:
             raise HandleCogError(f"Contest with id `{e.contest_id}` not found.")
         if contest.phase != "FINISHED":
-            raise HandleCogError(
-                f"Contest `{contest_id} | {contest.name}` has not finished."
-            )
+            raise HandleCogError(f"Contest `{contest_id} | {contest.name}` has not finished.")
         try:
             changes = await cf.contest.ratingChanges(contest_id=contest_id)
         except cf.RatingChangesUnavailableError:
             changes = None
         if not changes:
-            raise HandleCogError(
-                f"Rating changes are not available for contest `{contest_id} | "
-                f"{contest.name}`."
-            )
+            raise HandleCogError(f"Rating changes are not available for contest `{contest_id} | " f"{contest.name}`.")
 
         change_by_handle = {change.handle: change for change in changes}
         rankup_embeds = self._make_rankup_embeds(ctx.guild, contest, change_by_handle)
@@ -1076,36 +955,16 @@ class Handles(commands.Cog):
         role = roles[0]
         if action == "give":
             if role in ctx.author.roles:
-                await ctx.send(
-                    embed=discord_common.embed_neutral(
-                        f"You are already subscribed to {what} reminders"
-                    )
-                )
+                await ctx.send(embed=discord_common.embed_neutral(f"You are already subscribed to {what} reminders"))
                 return
-            await ctx.author.add_roles(
-                role, reason=f"User subscribed to {what} reminders"
-            )
-            await ctx.send(
-                embed=discord_common.embed_success(
-                    f"Successfully subscribed to {what} reminders"
-                )
-            )
+            await ctx.author.add_roles(role, reason=f"User subscribed to {what} reminders")
+            await ctx.send(embed=discord_common.embed_success(f"Successfully subscribed to {what} reminders"))
         elif action == "remove":
             if role not in ctx.author.roles:
-                await ctx.send(
-                    embed=discord_common.embed_neutral(
-                        f"You are not subscribed to {what} reminders"
-                    )
-                )
+                await ctx.send(embed=discord_common.embed_neutral(f"You are not subscribed to {what} reminders"))
                 return
-            await ctx.author.remove_roles(
-                role, reason=f"User unsubscribed from {what} reminders"
-            )
-            await ctx.send(
-                embed=discord_common.embed_success(
-                    f"Successfully unsubscribed from {what} reminders"
-                )
-            )
+            await ctx.author.remove_roles(role, reason=f"User unsubscribed from {what} reminders")
+            await ctx.send(embed=discord_common.embed_success(f"Successfully unsubscribed from {what} reminders"))
         else:
             raise HandleCogError(f"Invalid action {action}")
 
