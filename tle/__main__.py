@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import distutils.util
 import logging
 import os
 from dotenv import load_dotenv
@@ -9,6 +8,8 @@ from logging.handlers import TimedRotatingFileHandler
 from os import environ
 from pathlib import Path
 
+load_dotenv()
+
 import seaborn as sns
 from discord.ext import commands
 from matplotlib import pyplot as plt
@@ -16,8 +17,6 @@ from matplotlib import pyplot as plt
 from tle import constants
 from tle.util import codeforces_common as cf_common
 from tle.util import discord_common, font_downloader
-
-load_dotenv()
 
 
 def setup():

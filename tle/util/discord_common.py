@@ -1,3 +1,4 @@
+from os import environ
 import asyncio
 import logging
 import functools
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 _CF_COLORS = (0xFFCA1F, 0x198BCC, 0xFF2020)
 _SUCCESS_GREEN = 0x28A745
 _ALERT_AMBER = 0xFFBF00
-_BOT_PREFIX = ";"
+_BOT_PREFIX = environ.get("PREFIX")
 
 
 def embed_neutral(desc, color=None):

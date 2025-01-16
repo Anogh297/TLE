@@ -587,6 +587,7 @@ class Contests(commands.Cog):
             )
         except cache_system2.RanklistNotMonitored:
             if contest.phase == "BEFORE":
+                await wait_msg.delete()
                 raise ContestCogError(
                     f"Contest `{contest.id} | {contest.name}` has not started"
                 )
