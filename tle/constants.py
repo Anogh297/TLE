@@ -22,18 +22,17 @@ CONTEST_WRITERS_JSON_FILE_PATH = os.path.join(MISC_DIR, "contest_writers.json")
 
 LOG_FILE_PATH = os.path.join(LOGS_DIR, "tle.log")
 
-ALL_DIRS = (
-    attrib_value
-    for attrib_name, attrib_value in list(globals().items())
-    if attrib_name.endswith("DIR")
-)
+ALL_DIRS = (attrib_value for attrib_name, attrib_value in list(globals().items()) if attrib_name.endswith("DIR"))
 
 TLE_ADMIN = os.environ.get("TLE_ADMIN", "Admin")
 TLE_MODERATOR = os.environ.get("TLE_MODERATOR", "Moderator")
 
-OWNER = os.environ.get("BOT_OWNER")
+OWNER = int(os.environ.get("BOT_OWNER"))
+
 
 def is_me():
     def predicate(ctx):
+        print("is_me was called ", ctx.message.author.id == OWNER, " ", ctx.message.author.id, OWNER)
         return ctx.message.author.id == OWNER
+
     return commands.check(predicate)

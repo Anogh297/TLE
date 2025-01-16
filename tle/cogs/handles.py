@@ -297,8 +297,7 @@ class Handles(commands.Cog):
         cf_common.user_db.set_inactive([(member.guild.id, member.id)])
 
     @commands.command(brief="update status, mark guild members as active")
-    @commands.has_role(constants.TLE_ADMIN)
-    @constants.is_me()
+    @commands.check_any(constants.is_me(), commands.has_any_role(constants.TLE_ADMIN))
     async def _updatestatus(self, ctx):
         gid = ctx.guild.id
         active_ids = [m.id for m in ctx.guild.members]
@@ -384,7 +383,7 @@ class Handles(commands.Cog):
             await member.add_roles(role_to_assign, reason=reason)
 
     @handle.command(brief="Set Codeforces handle of a user", aliases=["link"])
-    @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)
+    @commands.check_any(constants.is_me(), commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR))
     async def set(self, ctx, member: discord.Member, handle: str):
         """Set Codeforces handle of a user."""
         # CF API returns correct handle ignoring case, update to it
@@ -475,7 +474,7 @@ class Handles(commands.Cog):
         await ctx.send(embed=embed)
 
     @handle.command(brief="Unlink handle", aliases=["unlink"])
-    @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)
+    @commands.check_any(constants.is_me(), commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR))
     async def remove(self, ctx, handle: str):
         """Remove Codeforces handle of a user."""
         (handle,) = await cf_common.resolve_handles(ctx, self.converter, [handle])
@@ -498,7 +497,7 @@ class Handles(commands.Cog):
         await self._unmagic_handles(ctx, [handle], {handle: member})
 
     @handle.command(brief="Resolve handles needing redirection")
-    @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)
+    @commands.check_any(constants.is_me(), commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR))
     async def unmagic_all(self, ctx):
         """Updates handles of all users that have changed handles
         (typically new year's magic)"""
@@ -879,14 +878,14 @@ class Handles(commands.Cog):
         await ctx.send_help(ctx.command)
 
     @roleupdate.command(brief="Update Codeforces rank roles")
-    @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)
+    @commands.check_any(constants.is_me(), commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR))
     async def now(self, ctx):
         """Updates Codeforces rank roles for every member in this server."""
         await self._update_ranks_all(ctx.guild)
         await ctx.send(embed=discord_common.embed_success("Roles updated successfully."))
 
     @roleupdate.command(brief="Enable or disable auto role updates", usage="on|off")
-    @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)
+    @commands.check_any(constants.is_me(), commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR))
     async def auto(self, ctx, arg):
         """Auto role update refers to automatic updating of rank roles when rating
         changes are released on Codeforces. 'on'/'off' disables or enables auto role
@@ -906,7 +905,7 @@ class Handles(commands.Cog):
             raise ValueError(f"arg must be 'on' or 'off', got '{arg}' instead.")
 
     @roleupdate.command(brief="Publish a rank update for the given contest", usage="here|off|contest_id")
-    @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)
+    @commands.check_any(constants.is_me(), commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR))
     async def publish(self, ctx, arg):
         """This is a feature to publish a summary of rank changes and top rating
         increases in a particular contest for members of this server. 'here' will

@@ -34,12 +34,7 @@ def git_history():
         branch = out.strip().decode("ascii")
         out = _minimal_ext_cmd(["git", "log", "--oneline", "-5"])
         history = out.strip().decode("ascii")
-        return (
-            "Branch:\n"
-            + textwrap.indent(branch, "  ")
-            + "\nCommits:\n"
-            + textwrap.indent(history, "  ")
-        )
+        return "Branch:\n" + textwrap.indent(branch, "  ") + "\nCommits:\n" + textwrap.indent(history, "  ")
     except OSError:
         return "Fetching git info failed"
 
@@ -55,8 +50,7 @@ class Meta(commands.Cog):
         await ctx.send_help(ctx.command)
 
     @meta.command(brief="Restarts TLE")
-    @commands.has_role(constants.TLE_ADMIN)
-    @constants.is_me()
+    @commands.check_any(constants.is_me(), commands.has_any_role(constants.TLE_ADMIN))
     async def restart(self, ctx):
         """Restarts the bot."""
         # Really, we just exit with a special code
@@ -65,8 +59,7 @@ class Meta(commands.Cog):
         os._exit(RESTART)
 
     @meta.command(brief="Kill TLE")
-    @commands.has_role(constants.TLE_ADMIN)
-    @constants.is_me()
+    @commands.check_any(constants.is_me(), commands.has_any_role(constants.TLE_ADMIN))
     async def kill(self, ctx):
         """Restarts the bot."""
         await ctx.send("Dying...")
@@ -79,10 +72,7 @@ class Meta(commands.Cog):
         message = await ctx.send(":ping_pong: Pong!")
         end = time.perf_counter()
         duration = (end - start) * 1000
-        await message.edit(
-            content=f"REST API latency: {int(duration)}ms\n"
-            f"Gateway API latency: {int(self.bot.latency * 1000)}ms"
-        )
+        await message.edit(content=f"REST API latency: {int(duration)}ms\n" f"Gateway API latency: {int(self.bot.latency * 1000)}ms")
 
     @meta.command(brief="Get git information")
     async def git(self, ctx):
@@ -92,20 +82,13 @@ class Meta(commands.Cog):
     @meta.command(brief="Prints bot uptime")
     async def uptime(self, ctx):
         """Replies with how long TLE has been up."""
-        await ctx.send(
-            "TLE has been running for "
-            + pretty_time_format(time.time() - self.start_time)
-        )
+        await ctx.send("TLE has been running for " + pretty_time_format(time.time() - self.start_time))
 
     @meta.command(brief="Print bot guilds")
-    @commands.has_role(constants.TLE_ADMIN)
-    @constants.is_me()
+    @commands.check_any(constants.is_me(), commands.has_any_role(constants.TLE_ADMIN))
     async def guilds(self, ctx):
         "Replies with info on the bot's guilds"
-        msg = [
-            f"Guild ID: {guild.id} | Name: {guild.name} | Owner: {guild.owner.id} | Icon: {guild.icon}"
-            for guild in self.bot.guilds
-        ]
+        msg = [f"Guild ID: {guild.id} | Name: {guild.name} | Owner: {guild.owner.id} | Icon: {guild.icon}" for guild in self.bot.guilds]
         await ctx.send("```" + "\n".join(msg) + "```")
 
 

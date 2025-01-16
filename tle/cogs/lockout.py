@@ -83,16 +83,12 @@ class Round(commands.Cog):
     async def _check_ongoing_rounds_for_guild(self, guild):
         channel_id = cf_common.user_db.get_round_channel(guild.id)
         if channel_id == None:
-            logger.warn(
-                f"_check_ongoing_rounds_for_guild: lockout round channel is not set."
-            )
+            logger.warn(f"_check_ongoing_rounds_for_guild: lockout round channel is not set.")
             return
 
         channel = self.bot.get_channel(channel_id)
         if channel is None:
-            logger.warn(
-                f"_check_ongoing_rounds_for_guild: lockout round channel is not found on the server."
-            )
+            logger.warn(f"_check_ongoing_rounds_for_guild: lockout round channel is not found on the server.")
             return
 
         await self._update_all_ongoing_rounds(guild, channel, True)
@@ -103,15 +99,11 @@ class Round(commands.Cog):
             rounds = cf_common.user_db.get_ongoing_rounds(guild.id)
             try:
                 for round in rounds:
-                    await self._check_round_complete(
-                        guild, channel, round, isAutomaticRun
-                    )
+                    await self._check_round_complete(guild, channel, round, isAutomaticRun)
             except Exception as exception:
                 if isAutomaticRun:
                     # in automatic run we need to handle exceptions on our own -> put them into server log for now (TODO: logging channel would be better)
-                    msg = "Ignoring exception in command {}:".format(
-                        "_check_round_complete"
-                    )
+                    msg = "Ignoring exception in command {}:".format("_check_round_complete")
                     exc_info = type(exception), exception, exception.__traceback__
                     extra = {}
                     logger.exception(msg, exc_info=exc_info, extra=extra)
@@ -125,9 +117,7 @@ class Round(commands.Cog):
         lockout_channel_id = cf_common.user_db.get_round_channel(ctx.guild.id)
         channel = ctx.guild.get_channel(lockout_channel_id)
         if not lockout_channel_id or ctx.channel.id != lockout_channel_id:
-            raise RoundCogError(
-                f"You must use this command in lockout round channel ({channel.mention})."
-            )
+            raise RoundCogError(f"You must use this command in lockout round channel ({channel.mention}).")
 
     async def _check_if_all_members_ready(self, ctx, members):
         embed = discord.Embed(
@@ -142,17 +132,11 @@ class Round(commands.Cog):
         reacted = []
 
         def check(reaction, member):
-            return (
-                reaction.message.id == message.id
-                and reaction.emoji == "✅"
-                and member in members
-            )
+            return reaction.message.id == message.id and reaction.emoji == "✅" and member in members
 
         while True:
             try:
-                _, member = await self.bot.wait_for(
-                    "reaction_add", timeout=30, check=check
-                )
+                _, member = await self.bot.wait_for("reaction_add", timeout=30, check=check)
                 reacted.append(member)
                 if all(item in reacted for item in members):
                     all_reacted = True
@@ -161,31 +145,20 @@ class Round(commands.Cog):
                 break
 
         if not all_reacted:
-            raise RoundCogError(
-                f"Unable to start round, some participant(s) did not react in time!"
-            )
+            raise RoundCogError(f"Unable to start round, some participant(s) did not react in time!")
 
     def _check_if_any_member_is_already_in_round(self, ctx, members):
         busy_members = []
         for member in members:
-            if cf_common.user_db.check_if_user_in_ongoing_round(
-                ctx.guild.id, member.id
-            ):
+            if cf_common.user_db.check_if_user_in_ongoing_round(ctx.guild.id, member.id):
                 busy_members.append(member)
         if busy_members:
-            busy_members_str = ", ".join(
-                [
-                    ctx.guild.get_member(int(member.id)).mention
-                    for member in busy_members
-                ]
-            )
+            busy_members_str = ", ".join([ctx.guild.get_member(int(member.id)).mention for member in busy_members])
             error = f"{busy_members_str} are registered in ongoing lockout rounds."
             raise RoundCogError(error)
 
     async def _get_time_response(self, client, ctx, message, time, author, range_):
-        original = await ctx.send(
-            embed=discord.Embed(description=message, color=discord.Color.green())
-        )
+        original = await ctx.send(embed=discord.Embed(description=message, color=discord.Color.green()))
 
         def check(m):
             if not m.content.isdigit() or not m.author == author:
@@ -203,12 +176,8 @@ class Round(commands.Cog):
             await original.delete()
             raise RoundCogError(f"{ctx.author.mention} you took too long to decide")
 
-    async def _get_seq_response(
-        self, client, ctx, message, time, length, author, range_
-    ):
-        original = await ctx.send(
-            embed=discord.Embed(description=message, color=discord.Color.green())
-        )
+    async def _get_seq_response(self, client, ctx, message, time, length, author, range_):
+        original = await ctx.send(embed=discord.Embed(description=message, color=discord.Color.green()))
 
         def check(m):
             if m.author != author:
@@ -241,28 +210,13 @@ class Round(commands.Cog):
         problemEntries = round_info.problems.split()
 
         def get_problem(problemContestId, problemIndex):
-            return [
-                prob
-                for prob in cf_common.cache2.problem_cache.problems
-                if prob.contest_identifier == f"{problemContestId}{problemIndex}"
-            ]
+            return [prob for prob in cf_common.cache2.problem_cache.problems if prob.contest_identifier == f"{problemContestId}{problemIndex}"]
 
-        problems = [
-            get_problem(prob.split("/")[0], prob.split("/")[1]) if prob != "0" else None
-            for prob in problemEntries
-        ]
+        problems = [get_problem(prob.split("/")[0], prob.split("/")[1]) if prob != "0" else None for prob in problemEntries]
 
-        replacementStr = (
-            "This problem has been solved"
-            if round_info.repeat == 0
-            else "No problems of this rating left"
-        )
+        replacementStr = "This problem has been solved" if round_info.repeat == 0 else "No problems of this rating left"
         names = [
-            (
-                f"[{prob[0].name}](https://codeforces.com/contest/{prob[0].contestId}/problem/{prob[0].index})"
-                if prob is not None
-                else replacementStr
-            )
+            (f"[{prob[0].name}](https://codeforces.com/contest/{prob[0].contestId}/problem/{prob[0].index})" if prob is not None else replacementStr)
             for prob in problems
         ]
 
@@ -275,13 +229,9 @@ class Round(commands.Cog):
         embed = discord.Embed(description=desc, color=discord.Color.magenta())
         embed.set_author(name=f"Problems")
 
-        embed.add_field(
-            name="Points", value="\n".join(round_info.points.split()), inline=True
-        )
+        embed.add_field(name="Points", value="\n".join(round_info.points.split()), inline=True)
         embed.add_field(name="Problem Name", value="\n".join(names), inline=True)
-        embed.add_field(
-            name="Rating", value="\n".join(round_info.rating.split()), inline=True
-        )
+        embed.add_field(name="Rating", value="\n".join(round_info.rating.split()), inline=True)
         timestr = cf_common.pretty_time_format(
             ((round_info.time + 60 * round_info.duration) - int(time.time())),
             shorten=True,
@@ -292,18 +242,14 @@ class Round(commands.Cog):
         return embed
 
     def make_round_embed(self, ctx):
-        desc = (
-            "Information about Round related commands! **[use ;round <command>]**\n\n"
-        )
+        desc = "Information about Round related commands! **[use ;round <command>]**\n\n"
         match = self.bot.get_command("round")
 
         for cmd in match.commands:
             desc += f"`{cmd.name}`: **{cmd.brief}**\n"
         embed = discord.Embed(description=desc, color=discord.Color.dark_magenta())
         embed.set_author(name="Lockout commands help", icon_url=ctx.me.avatar)
-        embed.set_footer(
-            text="For detailed usage about a particular command, type ;help round <command>"
-        )
+        embed.set_footer(text="For detailed usage about a particular command, type ;help round <command>")
         embed.add_field(
             name="Based on Lockout bot",
             value=f"[GitHub](https://github.com/pseudocoder10/Lockout-Bot)",
@@ -318,18 +264,12 @@ class Round(commands.Cog):
     async def round(self, ctx):
         await ctx.send(embed=self.make_round_embed(ctx))
 
-    @round.command(
-        brief="Set the lockout channel to the current channel (Admin/Mod only)"
-    )
-    @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)  # OK
+    @round.command(brief="Set the lockout channel to the current channel (Admin/Mod only)")
+    @commands.check_any(constants.is_me(), commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR))  # OK
     async def set_channel(self, ctx):
         """Sets the lockout round channel to the current channel."""
         cf_common.user_db.set_round_channel(ctx.guild.id, ctx.channel.id)
-        await ctx.send(
-            embed=discord_common.embed_success(
-                "Lockout round channel saved successfully"
-            )
-        )
+        await ctx.send(embed=discord_common.embed_success("Lockout round channel saved successfully"))
 
     @round.command(brief="Get the lockout channel")
     async def get_channel(self, ctx):
@@ -349,25 +289,16 @@ class Round(commands.Cog):
                 for prob in cf_common.cache2.problem_cache.problems
                 if prob.rating == rating
                 and prob.name not in solved
-                and not any(
-                    cf_common.is_contest_writer(prob.contestId, handle)
-                    for handle in handles
-                )
+                and not any(cf_common.is_contest_writer(prob.contestId, handle) for handle in handles)
                 and not cf_common.is_nonstandard_problem(prob)
                 and prob not in selected
             ]
 
         problems = get_problems(rating)
-        problems.sort(
-            key=lambda problem: cf_common.cache2.contest_cache.get_contest(
-                problem.contestId
-            ).startTimeSeconds
-        )
+        problems.sort(key=lambda problem: cf_common.cache2.contest_cache.get_contest(problem.contestId).startTimeSeconds)
 
         if not problems:
-            raise RoundCogError(
-                f"Not enough unsolved problems of rating {rating} available."
-            )
+            raise RoundCogError(f"Not enough unsolved problems of rating {rating} available.")
         choice = max(random.randrange(len(problems)) for _ in range(5))
         problem = problems[choice]
         return problem
@@ -385,9 +316,7 @@ class Round(commands.Cog):
         if ctx.author not in members:
             members.append(ctx.author)
         if len(members) > MAX_ROUND_USERS:
-            raise RoundCogError(
-                f"{ctx.author.mention} atmost {MAX_ROUND_USERS} users can compete at a time"
-            )
+            raise RoundCogError(f"{ctx.author.mention} atmost {MAX_ROUND_USERS} users can compete at a time")
 
         # get handles first. This also checks if discord member has a linked handle!
         handles = cf_common.members_to_handles(members, ctx.guild.id)
@@ -449,22 +378,13 @@ class Round(commands.Cog):
 
         # pick problems
         submissions = [await cf.user.status(handle=handle) for handle in handles]
-        solved = {
-            sub.problem.name
-            for subs in submissions
-            for sub in subs
-            if sub.verdict != "COMPILATION_ERROR"
-        }
+        solved = {sub.problem.name for subs in submissions for sub in subs if sub.verdict != "COMPILATION_ERROR"}
         selected = []
         for rating in ratings:
             problem = await self._pick_problem(handles, solved, rating, selected)
             selected.append(problem)
 
-        await ctx.send(
-            embed=discord.Embed(
-                description="Starting the round...", color=discord.Color.green()
-            )
-        )
+        await ctx.send(embed=discord.Embed(description="Starting the round...", color=discord.Color.green()))
 
         cf_common.user_db.create_ongoing_round(
             ctx.guild.id,
@@ -481,27 +401,21 @@ class Round(commands.Cog):
         await ctx.send(embed=self._round_problems_embed(round_info))
 
     @round.command(brief="Invalidate a round (Admin/Mod only)", usage="@user")
-    @commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR)  # OK
+    @commands.check_any(constants.is_me(), commands.has_any_role(constants.TLE_ADMIN, constants.TLE_MODERATOR))  # OK
     async def _invalidate(self, ctx, member: discord.Member):
-        if not cf_common.user_db.check_if_user_in_ongoing_round(
-            ctx.guild.id, member.id
-        ):
+        if not cf_common.user_db.check_if_user_in_ongoing_round(ctx.guild.id, member.id):
             raise RoundCogError(f"{member.mention} is not in a round")
         cf_common.user_db.delete_round(ctx.guild.id, member.id)
         await ctx.send(f"Round deleted.")
 
-    @round.command(
-        brief="View problems of your round or for a specific user", usage="[@user]"
-    )
+    @round.command(brief="View problems of your round or for a specific user", usage="[@user]")
     async def problems(self, ctx, member: discord.Member = None):
         # check if we are in the correct channel
         self._check_if_correct_channel(ctx)
 
         if not member:
             member = ctx.author
-        if not cf_common.user_db.check_if_user_in_ongoing_round(
-            ctx.guild.id, member.id
-        ):
+        if not cf_common.user_db.check_if_user_in_ongoing_round(ctx.guild.id, member.id):
             raise RoundCogError(f"{member.mention} is not in a round")
 
         round_info = cf_common.user_db.get_round_info(ctx.guild.id, member.id)
@@ -525,8 +439,7 @@ class Round(commands.Cog):
         subs = [
             sub
             for sub in recent_subs
-            if (sub.verdict == "OK" or sub.verdict == "TESTING")
-            and sub.problem.contest_identifier == f"{contest_id}{index}"
+            if (sub.verdict == "OK" or sub.verdict == "TESTING") and sub.problem.contest_identifier == f"{contest_id}{index}"
         ]
 
         if not subs:
@@ -566,10 +479,7 @@ class Round(commands.Cog):
 
     async def _update_round(self, round_info):
         user_ids = list(map(int, round_info.users.split()))
-        handles = [
-            cf_common.user_db.get_handle(user_id, round_info.guild)
-            for user_id in user_ids
-        ]
+        handles = [cf_common.user_db.get_handle(user_id, round_info.guild) for user_id in user_ids]
         rating = list(map(int, round_info.rating.split()))
         enter_time = time.time()
         points = list(map(int, round_info.points.split()))
@@ -580,10 +490,7 @@ class Round(commands.Cog):
         judging, over, updated = False, False, False
 
         updates = []
-        recent_subs = [
-            await cf.user.status(handle=handle, count=RECENT_SUBS_LIMIT)
-            for handle in handles
-        ]
+        recent_subs = [await cf.user.status(handle=handle, count=RECENT_SUBS_LIMIT) for handle in handles]
         for i in range(len(problems)):
             # Problem was solved before and no replacement -> skip
             if problems[i] == "0":
@@ -608,11 +515,7 @@ class Round(commands.Cog):
             # Check if someone solved a problem
             solved = []
             for j in range(len(user_ids)):
-                if (
-                    times[j] != PROBLEM_STATUS_UNSOLVED
-                    and times[j] == min(times)
-                    and times[j] <= round_info.time + 60 * round_info.duration
-                ):
+                if times[j] != PROBLEM_STATUS_UNSOLVED and times[j] == min(times) and times[j] <= round_info.time + 60 * round_info.duration:
                     solved.append(user_ids[j])
                     status[j] += points[i]
                     problems[i] = "0"
@@ -624,15 +527,8 @@ class Round(commands.Cog):
             # Get new problem if repeat is set to 1
             if len(solved) > 0 and round_info.repeat == 1:
                 try:
-                    submissions = [
-                        await cf.user.status(handle=handle) for handle in handles
-                    ]
-                    solved = {
-                        sub.problem.name
-                        for subs in submissions
-                        for sub in subs
-                        if sub.verdict != "COMPILATION_ERROR"
-                    }
+                    submissions = [await cf.user.status(handle=handle) for handle in handles]
+                    solved = {sub.problem.name for subs in submissions for sub in subs if sub.verdict != "COMPILATION_ERROR"}
                     problem = await self._pick_problem(handles, solved, rating[i], [])
                     problems[i] = f"{problem.contestId}/{problem.index}"
                 except RoundCogError:
@@ -640,17 +536,12 @@ class Round(commands.Cog):
 
         # If changes to the round state were made update the DB
         if updated:
-            cf_common.user_db.update_round_status(
-                round_info.guild, user_ids[0], status, problems, timestamp
-            )
+            cf_common.user_db.update_round_status(round_info.guild, user_ids[0], status, problems, timestamp)
 
         # check if round is over (time over or no more ranklist changes possible)
         if not judging and (
             enter_time > round_info.time + 60 * round_info.duration
-            or (
-                round_info.repeat == 0
-                and self._no_round_change_possible(status[:], points, problems)
-            )
+            or (round_info.repeat == 0 and self._no_round_change_possible(status[:], points, problems))
         ):
             over = True
         return updates, over, updated
@@ -659,9 +550,7 @@ class Round(commands.Cog):
         updates, over, updated = await self._update_round(round)
 
         if updated or over:
-            await channel.send(
-                f"{' '.join([(guild.get_member(int(m))).mention for m in round.users.split()])} there is an update in standings"
-            )
+            await channel.send(f"{' '.join([(guild.get_member(int(m))).mention for m in round.users.split()])} there is an update in standings")
 
         for i in range(len(updates)):
             if len(updates[i]):
@@ -769,9 +658,7 @@ class Round(commands.Cog):
 
     @round.command(name="recent", brief="Show recent rounds")
     async def recent(self, ctx, user: discord.Member = None):
-        data = cf_common.user_db.get_recent_rounds(
-            ctx.guild.id, str(user.id) if user else None
-        )
+        data = cf_common.user_db.get_recent_rounds(ctx.guild.id, str(user.id) if user else None)
 
         if not data:
             raise RoundCogError(f"No recent rounds")
@@ -916,9 +803,7 @@ class Round(commands.Cog):
 
     #         await ctx.send(embed=discord_.round_problems_embed(round_info))
 
-    @discord_common.send_error_if(
-        RoundCogError, cf_common.ResolveHandleError, cf_common.FilterError
-    )
+    @discord_common.send_error_if(RoundCogError, cf_common.ResolveHandleError, cf_common.FilterError)
     async def cog_command_error(self, ctx, error):
         pass
 
