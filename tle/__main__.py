@@ -8,7 +8,7 @@ from logging.handlers import TimedRotatingFileHandler
 from os import environ
 from pathlib import Path
 
-load_dotenv()
+load_dotenv(override=True)
 
 import seaborn as sns
 from discord.ext import commands
@@ -32,9 +32,7 @@ def setup():
         level=logging.INFO,
         handlers=[
             logging.StreamHandler(),
-            TimedRotatingFileHandler(
-                constants.LOG_FILE_PATH, when="D", backupCount=3, utc=True
-            ),
+            TimedRotatingFileHandler(constants.LOG_FILE_PATH, when="D", backupCount=3, utc=True),
         ],
     )
 
