@@ -650,7 +650,7 @@ class Round(commands.Cog):
         pages = _make_pages(data, title)
         paginator.paginate(
             self.bot,
-            ctx.channel,
+            ctx,
             pages,
             wait_time=_PAGINATE_WAIT_TIME,
             set_pagenum_footers=True,
@@ -698,7 +698,7 @@ class Round(commands.Cog):
         pages = _make_pages(data, title)
         paginator.paginate(
             self.bot,
-            ctx.channel,
+            ctx,
             pages,
             wait_time=_PAGINATE_WAIT_TIME,
             set_pagenum_footers=True,

@@ -210,7 +210,7 @@ class Contests(commands.Cog):
         pages = self._make_contest_pages(contests, title)
         paginator.paginate(
             self.bot,
-            ctx.channel,
+            ctx,
             pages,
             wait_time=_CONTEST_PAGINATE_WAIT_TIME,
             set_pagenum_footers=True,
@@ -515,7 +515,7 @@ class Contests(commands.Cog):
         await wait_msg.delete()
         await ctx.channel.send(embed=self._make_contest_embed_for_ranklist(ranklist))
         await self._show_ranklist(
-            channel=ctx.channel,
+            ctx=ctx,
             contest_id=contest_id,
             handles=handles,
             ranklist=ranklist,
@@ -523,13 +523,14 @@ class Contests(commands.Cog):
 
     async def _show_ranklist(
         self,
-        channel,
+        ctx,
         contest_id: int,
         handles: list[str],
         ranklist,
         vc: bool = False,
         delete_after: float = None,
     ):
+        channel = ctx.channel
         contest = cf_common.cache2.contest_cache.get_contest(contest_id)
         if ranklist is None:
             raise ContestCogError("No ranklist to show")
@@ -563,7 +564,7 @@ class Contests(commands.Cog):
         pages = self._make_standings_pages(contest, problem_indices, handle_standings, deltas)
         paginator.paginate(
             self.bot,
-            channel,
+            ctx,
             pages,
             wait_time=_STANDINGS_PAGINATE_WAIT_TIME,
             delete_after=delete_after,

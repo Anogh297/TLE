@@ -716,7 +716,7 @@ class Handles(commands.Cog):
         pages = _make_pages(users, title)
         paginator.paginate(
             self.bot,
-            ctx.channel,
+            ctx,
             pages,
             wait_time=_PAGINATE_WAIT_TIME,
             set_pagenum_footers=True,
