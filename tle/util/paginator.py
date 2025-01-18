@@ -65,14 +65,13 @@ class Paginated:
             await self.message.add_reaction(react)
 
         def check(reaction, user):
-            return bot.user != user and reaction.message.id == self.message.id and reaction.emoji in self.reaction_map
+            return bot.user != user and reaction.message.id == self.message.id and reaction.emoji in self.reaction_map and user == ctx.author
 
         while True:
             try:
                 reaction, user = await bot.wait_for("reaction_add", timeout=wait_time, check=check)
                 await reaction.remove(user)
-                if user == ctx.author:
-                    await self.reaction_map[reaction.emoji]()
+                await self.reaction_map[reaction.emoji]()
             except asyncio.TimeoutError:
                 await self.message.clear_reactions()
                 break
