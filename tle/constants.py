@@ -32,7 +32,6 @@ OWNER = int(os.environ.get("BOT_OWNER"))
 
 def is_me():
     def predicate(ctx):
-        print("is_me was called ", ctx.message.author.id == OWNER, " ", ctx.message.author.id, OWNER)
         return ctx.message.author.id == OWNER
 
     return commands.check(predicate)

@@ -754,7 +754,7 @@ class Dueling(commands.Cog):
                 d += 1
         message = discord.utils.escape_mentions(f"`{member1.display_name}` ({w}/{d}/{l}) `{member2.display_name}`")
         pages = self._paginate_duels(data, message, ctx.guild.id, False)
-        paginator.paginate(self.bot, ctx.channel, pages, wait_time=5 * 60, set_pagenum_footers=True)
+        paginator.paginate(self.bot, ctx, pages, wait_time=5 * 60, set_pagenum_footers=True)
 
     @duel.command(brief="Print user dueling history")
     async def history(self, ctx, member: discord.Member = None):
@@ -762,13 +762,13 @@ class Dueling(commands.Cog):
         data = cf_common.user_db.get_duels(member.id, ctx.guild.id)
         message = discord.utils.escape_mentions(f"dueling history of `{member.display_name}`")
         pages = self._paginate_duels(data, message, ctx.guild.id, False)
-        paginator.paginate(self.bot, ctx.channel, pages, wait_time=5 * 60, set_pagenum_footers=True)
+        paginator.paginate(self.bot, ctx, pages, wait_time=5 * 60, set_pagenum_footers=True)
 
     @duel.command(brief="Print a list of recent duels.")
     async def recent(self, ctx):
         data = cf_common.user_db.get_recent_duels(ctx.guild.id)
         pages = self._paginate_duels(data, "list of recent duels", ctx.guild.id, True)
-        paginator.paginate(self.bot, ctx.channel, pages, wait_time=5 * 60, set_pagenum_footers=True)
+        paginator.paginate(self.bot, ctx, pages, wait_time=5 * 60, set_pagenum_footers=True)
 
     @duel.command(brief="Print list of ongoing duels.")
     async def ongoing(self, ctx, member: discord.Member = None):
@@ -793,7 +793,7 @@ class Dueling(commands.Cog):
             raise DuelCogError("There are no ongoing duels.")
 
         pages = [make_page(chunk) for chunk in paginator.chunkify(data, 7)]
-        paginator.paginate(self.bot, ctx.channel, pages, wait_time=5 * 60, set_pagenum_footers=True)
+        paginator.paginate(self.bot, ctx, pages, wait_time=5 * 60, set_pagenum_footers=True)
 
     @duel.command(brief="Show duelists")
     async def ranklist(self, ctx):
@@ -833,7 +833,7 @@ class Dueling(commands.Cog):
             raise DuelCogError("There are no active duelists.")
 
         pages = [make_page(chunk, k) for k, chunk in enumerate(paginator.chunkify(users, _PER_PAGE))]
-        paginator.paginate(self.bot, ctx.channel, pages, wait_time=5 * 60, set_pagenum_footers=True)
+        paginator.paginate(self.bot, ctx, pages, wait_time=5 * 60, set_pagenum_footers=True)
 
     async def invalidate_duel(self, ctx, duelid, challenger_id, challengee_id):
         rc = cf_common.user_db.invalidate_duel(duelid, ctx.guild.id)

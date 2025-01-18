@@ -50,7 +50,9 @@ class Paginated:
     async def next_page(self):
         await self.show_page(self.cur_page + 1)
 
-    async def paginate(self, bot, channel, wait_time, delete_after: float = None):
+    async def paginate(self, bot, ctx, wait_time, delete_after: float = None):
+        channel = ctx.channel
+
         content, embed = self.pages[0]
         self.message = await channel.send(content, embed=embed, delete_after=delete_after)
 
@@ -69,7 +71,8 @@ class Paginated:
             try:
                 reaction, user = await bot.wait_for("reaction_add", timeout=wait_time, check=check)
                 await reaction.remove(user)
-                await self.reaction_map[reaction.emoji]()
+                if user == ctx.author:
+                    await self.reaction_map[reaction.emoji]()
             except asyncio.TimeoutError:
                 await self.message.clear_reactions()
                 break
@@ -77,13 +80,14 @@ class Paginated:
 
 def paginate(
     bot,
-    channel,
+    ctx,
     pages,
     *,
     wait_time,
     set_pagenum_footers=False,
     delete_after: float = None,
 ):
+    channel = ctx.channel
     if not pages:
         raise NoPagesError()
     permissions = channel.permissions_for(channel.guild.me)
@@ -93,4 +97,4 @@ def paginate(
         for i, (content, embed) in enumerate(pages):
             embed.set_footer(text=f"Page {i + 1} / {len(pages)}")
     paginated = Paginated(pages)
-    asyncio.create_task(paginated.paginate(bot, channel, wait_time, delete_after))
+    asyncio.create_task(paginated.paginate(bot, ctx, wait_time, delete_after))

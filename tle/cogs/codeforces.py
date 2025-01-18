@@ -145,7 +145,7 @@ class Codeforces(commands.Cog):
                 return title, embed
 
             pages = [make_page(chunk, pi, len(problems)) for pi, chunk in enumerate(paginator.chunkify(problems, 10))]
-            paginator.paginate(self.bot, ctx.channel, pages, wait_time=5 * 60, set_pagenum_footers=True)
+            paginator.paginate(self.bot, ctx, pages, wait_time=5 * 60, set_pagenum_footers=True)
 
     @commands.command(
         brief="Recommend a problem",
@@ -247,7 +247,7 @@ class Codeforces(commands.Cog):
             return title, embed
 
         pages = [make_page(chunk) for chunk in paginator.chunkify(submissions[:100], 10)]
-        paginator.paginate(self.bot, ctx.channel, pages, wait_time=5 * 60, set_pagenum_footers=True)
+        paginator.paginate(self.bot, ctx, pages, wait_time=5 * 60, set_pagenum_footers=True)
 
     @commands.command(
         brief="Create a mashup",
@@ -433,7 +433,7 @@ class Codeforces(commands.Cog):
                 score += _calculateGitgudScoreForDelta(delta)
 
         pages = [make_page(chunk, score) for chunk in paginator.chunkify(data, 10)]
-        paginator.paginate(self.bot, ctx.channel, pages, wait_time=5 * 60, set_pagenum_footers=True)
+        paginator.paginate(self.bot, ctx, pages, wait_time=5 * 60, set_pagenum_footers=True)
 
     @commands.command(brief="Print user nogud history")
     async def nogudlog(self, ctx, member: discord.Member = None):
@@ -463,7 +463,7 @@ class Codeforces(commands.Cog):
         data = [entry for entry in data if entry[1] is None]
 
         pages = [make_page(chunk) for chunk in paginator.chunkify(data, 10)]
-        paginator.paginate(self.bot, ctx.channel, pages, wait_time=5 * 60, set_pagenum_footers=True)
+        paginator.paginate(self.bot, ctx, pages, wait_time=5 * 60, set_pagenum_footers=True)
 
     @commands.command(brief="Report challenge completion", aliases=["gotbad"])
     @cf_common.user_guard(group="gitgud")
@@ -581,7 +581,7 @@ class Codeforces(commands.Cog):
             return message, embed
 
         pages = [make_page(chunk) for chunk in paginator.chunkify(contests, 5)]
-        paginator.paginate(self.bot, ctx.channel, pages, wait_time=5 * 60, set_pagenum_footers=True)
+        paginator.paginate(self.bot, ctx, pages, wait_time=5 * 60, set_pagenum_footers=True)
 
     @commands.command(brief="Display unsolved rounds closest to completion", usage="[keywords]")
     async def fullsolve(self, ctx, *args: str):
@@ -637,7 +637,7 @@ class Codeforces(commands.Cog):
             return message, embed
 
         pages = [make_page(chunk) for chunk in paginator.chunkify(contest_unsolved_pairs, 10)]
-        paginator.paginate(self.bot, ctx.channel, pages, wait_time=5 * 60, set_pagenum_footers=True)
+        paginator.paginate(self.bot, ctx, pages, wait_time=5 * 60, set_pagenum_footers=True)
 
     @staticmethod
     def getEloWinProbability(ra: float, rb: float) -> float:
