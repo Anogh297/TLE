@@ -50,7 +50,7 @@ class Solved(commands.Cog):
 
         users = {k: v for k, v in users.items() if v["data"] is not None and v["status"] == "OK"}
         for user_id, user_data in users.items():
-            user_data["data"] = [x for x in user_data["data"] if start_unix <= x["creationTimeSeconds"] <= end_unix]
+            user_data["data"] = [x for x in user_data["data"] if start_unix <= x["creationTimeSeconds"] <= end_unix and x["verdict"] == "OK"]
             users[user_id]["points"] = len(user_data["data"])  # Correct calculation
 
         start_time_12h = convert_to_12h_format(start_time)
