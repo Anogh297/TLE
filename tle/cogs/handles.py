@@ -253,7 +253,7 @@ def _make_pages(users, title):
         t += table.Header("#", "Name", "Handle", "Rating")
         t += table.Line()
         for i, (member, handle, rating) in enumerate(chunk):
-            name = member.display_name
+            name = member.name
             if len(name) > _NAME_MAX_LEN:
                 name = name[: _NAME_MAX_LEN - 1] + "…"
             rank = cf.rating2rank(rating)

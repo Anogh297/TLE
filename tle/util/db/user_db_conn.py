@@ -1,4 +1,5 @@
 import sqlite3
+import time
 from enum import IntEnum
 from collections import namedtuple
 
@@ -99,10 +100,7 @@ class UserDbConn:
             "PRIMARY KEY (user_id, guild_id)"
             ")"
         )
-        self.conn.execute(
-            "CREATE UNIQUE INDEX IF NOT EXISTS ix_user_handle_guild_handle "
-            "ON user_handle (guild_id, handle)"
-        )
+        self.conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_user_handle_guild_handle " "ON user_handle (guild_id, handle)")
         self.conn.execute(
             "CREATE TABLE IF NOT EXISTS cf_user_cache ("
             "handle              TEXT PRIMARY KEY,"
@@ -195,12 +193,7 @@ class UserDbConn:
             )
         """
         )
-        self.conn.execute(
-            "CREATE TABLE IF NOT EXISTS starboard ("
-            "guild_id     TEXT PRIMARY KEY,"
-            "channel_id   TEXT"
-            ")"
-        )
+        self.conn.execute("CREATE TABLE IF NOT EXISTS starboard (" "guild_id     TEXT PRIMARY KEY," "channel_id   TEXT" ")")
         self.conn.execute(
             "CREATE TABLE IF NOT EXISTS starboard_message ("
             "original_msg_id    TEXT PRIMARY KEY,"
@@ -208,17 +201,8 @@ class UserDbConn:
             "guild_id           TEXT"
             ")"
         )
-        self.conn.execute(
-            "CREATE TABLE IF NOT EXISTS rankup ("
-            "guild_id     TEXT PRIMARY KEY,"
-            "channel_id   TEXT"
-            ")"
-        )
-        self.conn.execute(
-            "CREATE TABLE IF NOT EXISTS auto_role_update ("
-            "guild_id     TEXT PRIMARY KEY"
-            ")"
-        )
+        self.conn.execute("CREATE TABLE IF NOT EXISTS rankup (" "guild_id     TEXT PRIMARY KEY," "channel_id   TEXT" ")")
+        self.conn.execute("CREATE TABLE IF NOT EXISTS auto_role_update (" "guild_id     TEXT PRIMARY KEY" ")")
 
         # Rated VCs stuff:
         self.conn.execute(
@@ -344,6 +328,15 @@ class UserDbConn:
             """
         )
 
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS last_solved (
+                discord_id TEXT PRIMARY KEY,
+                time REAL NOT NULL
+            )
+            """
+        )
+
     # Helper functions.
 
     def _insert_one(self, table: str, columns, values: tuple):
@@ -396,9 +389,7 @@ class UserDbConn:
             WHERE user_id = ? AND active_challenge_id IS NULL
         """
         cur = self.conn.cursor()
-        cur.execute(
-            query1, (user_id, issue_time, prob.name, prob.contestId, prob.index, delta)
-        )
+        cur.execute(query1, (user_id, issue_time, prob.name, prob.contestId, prob.index, delta))
         last_id, rc = cur.lastrowid, cur.rowcount
         if rc != 1:
             self.conn.rollback()
@@ -454,11 +445,7 @@ class UserDbConn:
         return self.conn.execute(query, (user_id,)).fetchall()
 
     def get_noguds(self, user_id):
-        query = (
-            "SELECT problem_name "
-            "FROM challenge "
-            f"WHERE user_id = ? AND status = {Gitgud.NOGUD}"
-        )
+        query = "SELECT problem_name " "FROM challenge " f"WHERE user_id = ? AND status = {Gitgud.NOGUD}"
         return {name for name, in self.conn.execute(query, (user_id,)).fetchall()}
 
     def gitlog(self, user_id):
@@ -529,57 +516,37 @@ class UserDbConn:
         return cf_common.fix_urls(cf.User._make(user)) if user else None
 
     def set_handle(self, user_id, guild_id, handle):
-        query = (
-            "SELECT user_id " "FROM user_handle " "WHERE guild_id = ? AND handle = ?"
-        )
+        query = "SELECT user_id " "FROM user_handle " "WHERE guild_id = ? AND handle = ?"
         existing = self.conn.execute(query, (guild_id, handle)).fetchone()
         if existing and int(existing[0]) != user_id:
             raise UniqueConstraintFailed
 
-        query = (
-            "INSERT OR REPLACE INTO user_handle "
-            "(user_id, guild_id, handle, active) "
-            "VALUES (?, ?, ?, 1)"
-        )
+        query = "INSERT OR REPLACE INTO user_handle " "(user_id, guild_id, handle, active) " "VALUES (?, ?, ?, 1)"
         with self.conn:
             return self.conn.execute(query, (user_id, guild_id, handle)).rowcount
 
     def set_inactive(self, guild_id_user_id_pairs):
-        query = (
-            "UPDATE user_handle " "SET active = 0 " "WHERE guild_id = ? AND user_id = ?"
-        )
+        query = "UPDATE user_handle " "SET active = 0 " "WHERE guild_id = ? AND user_id = ?"
         with self.conn:
             return self.conn.executemany(query, guild_id_user_id_pairs).rowcount
 
     def get_handle(self, user_id, guild_id):
-        query = (
-            "SELECT handle " "FROM user_handle " "WHERE user_id = ? AND guild_id = ?"
-        )
+        query = "SELECT handle " "FROM user_handle " "WHERE user_id = ? AND guild_id = ?"
         res = self.conn.execute(query, (user_id, guild_id)).fetchone()
         return res[0] if res else None
 
     def get_user_id(self, handle, guild_id):
-        query = (
-            "SELECT user_id "
-            "FROM user_handle "
-            "WHERE UPPER(handle) = UPPER(?) AND guild_id = ?"
-        )
+        query = "SELECT user_id " "FROM user_handle " "WHERE UPPER(handle) = UPPER(?) AND guild_id = ?"
         res = self.conn.execute(query, (handle, guild_id)).fetchone()
         return int(res[0]) if res else None
 
     def remove_handle(self, handle, guild_id):
-        query = (
-            "DELETE FROM user_handle " "WHERE UPPER(handle) = UPPER(?) AND guild_id = ?"
-        )
+        query = "DELETE FROM user_handle " "WHERE UPPER(handle) = UPPER(?) AND guild_id = ?"
         with self.conn:
             return self.conn.execute(query, (handle, guild_id)).rowcount
 
     def get_handles_for_guild(self, guild_id):
-        query = (
-            "SELECT user_id, handle "
-            "FROM user_handle "
-            "WHERE guild_id = ? AND active = 1"
-        )
+        query = "SELECT user_id, handle " "FROM user_handle " "WHERE guild_id = ? AND active = 1"
         res = self.conn.execute(query, (guild_id,)).fetchall()
         return [(int(user_id), handle) for user_id, handle in res]
 
@@ -622,11 +589,7 @@ class UserDbConn:
         return self.conn.execute(query, (guild_id,)).fetchone()
 
     def set_starboard(self, guild_id, channel_id):
-        query = (
-            "INSERT OR REPLACE INTO starboard "
-            "(guild_id, channel_id) "
-            "VALUES (?, ?)"
-        )
+        query = "INSERT OR REPLACE INTO starboard " "(guild_id, channel_id) " "VALUES (?, ?)"
         self.conn.execute(query, (guild_id, channel_id))
         self.conn.commit()
 
@@ -636,11 +599,7 @@ class UserDbConn:
         self.conn.commit()
 
     def add_starboard_message(self, original_msg_id, starboard_msg_id, guild_id):
-        query = (
-            "INSERT INTO starboard_message "
-            "(original_msg_id, starboard_msg_id, guild_id) "
-            "VALUES (?, ?, ?)"
-        )
+        query = "INSERT INTO starboard_message " "(original_msg_id, starboard_msg_id, guild_id) " "VALUES (?, ?, ?)"
         self.conn.execute(query, (original_msg_id, starboard_msg_id, guild_id))
         self.conn.commit()
 
@@ -667,10 +626,7 @@ class UserDbConn:
         return rc
 
     def set_duel_channel(self, guild_id, channel_id):
-        query = (
-            "INSERT OR REPLACE INTO duel_settings "
-            " (guild_id, channel_id) VALUES (?, ?)"
-        )
+        query = "INSERT OR REPLACE INTO duel_settings " " (guild_id, channel_id) VALUES (?, ?)"
         with self.conn:
             self.conn.execute(query, (guild_id, channel_id))
 
@@ -840,9 +796,7 @@ class UserDbConn:
             SELECT id, start_time, finish_time, problem_name, challenger, challengee, winner FROM duel
             WHERE ((challenger = ? AND challengee = ?) OR (challenger = ? AND challengee = ?)) AND guild_id = ? AND status == {Duel.COMPLETE} ORDER BY start_time DESC
         """
-        return self.conn.execute(
-            query, (userid1, userid2, userid2, userid1, guild_id)
-        ).fetchall()
+        return self.conn.execute(query, (userid1, userid2, userid2, userid1, guild_id)).fetchall()
 
     def get_recent_duels(self, guild_id):
         query = f"""
@@ -927,9 +881,7 @@ class UserDbConn:
         return int(channel_id[0]) if channel_id else None
 
     def set_rankup_channel(self, guild_id, channel_id):
-        query = (
-            "INSERT OR REPLACE INTO rankup " "(guild_id, channel_id) " "VALUES (?, ?)"
-        )
+        query = "INSERT OR REPLACE INTO rankup " "(guild_id, channel_id) " "VALUES (?, ?)"
         with self.conn:
             self.conn.execute(query, (guild_id, channel_id))
 
@@ -988,20 +940,12 @@ class UserDbConn:
         user_ids: [str],
     ):
         """Creates a rated vc and returns its id."""
-        query = (
-            "INSERT INTO rated_vcs "
-            "(contest_id, start_time, finish_time, status, guild_id) "
-            "VALUES ( ?, ?, ?, ?, ?)"
-        )
+        query = "INSERT INTO rated_vcs " "(contest_id, start_time, finish_time, status, guild_id) " "VALUES ( ?, ?, ?, ?, ?)"
         id = None
         with self.conn:
-            id = self.conn.execute(
-                query, (contest_id, start_time, finish_time, RatedVC.ONGOING, guild_id)
-            ).lastrowid
+            id = self.conn.execute(query, (contest_id, start_time, finish_time, RatedVC.ONGOING, guild_id)).lastrowid
             for user_id in user_ids:
-                query = (
-                    "INSERT INTO rated_vc_users " "(vc_id, user_id) " "VALUES (? , ?)"
-                )
+                query = "INSERT INTO rated_vc_users " "(vc_id, user_id) " "VALUES (? , ?)"
                 self.conn.execute(query, (id, user_id))
         return id
 
@@ -1012,9 +956,7 @@ class UserDbConn:
 
     def get_ongoing_rated_vc_ids(self):
         query = "SELECT id " "FROM rated_vcs " "WHERE status = ? "
-        vcs = self._fetchall(
-            query, params=(RatedVC.ONGOING,), row_factory=namedtuple_factory
-        )
+        vcs = self._fetchall(query, params=(RatedVC.ONGOING,), row_factory=namedtuple_factory)
         vc_ids = [vc.id for vc in vcs]
         return vc_ids
 
@@ -1031,24 +973,14 @@ class UserDbConn:
             self.conn.execute(query, (RatedVC.FINISHED, vc_id))
 
     def update_vc_rating(self, vc_id: int, user_id: str, rating: int):
-        query = (
-            "INSERT OR REPLACE INTO rated_vc_users "
-            "(vc_id, user_id, rating) "
-            "VALUES (?, ?, ?) "
-        )
+        query = "INSERT OR REPLACE INTO rated_vc_users " "(vc_id, user_id, rating) " "VALUES (?, ?, ?) "
 
         with self.conn:
             self.conn.execute(query, (vc_id, user_id, rating))
 
     def get_vc_rating(self, user_id: str, default_if_not_exist: bool = True):
-        query = (
-            "SELECT MAX(vc_id) AS latest_vc_id, rating "
-            "FROM rated_vc_users "
-            "WHERE user_id = ? AND rating IS NOT NULL"
-        )
-        rating = self._fetchone(
-            query, params=(user_id,), row_factory=namedtuple_factory
-        ).rating
+        query = "SELECT MAX(vc_id) AS latest_vc_id, rating " "FROM rated_vc_users " "WHERE user_id = ? AND rating IS NOT NULL"
+        rating = self._fetchone(query, params=(user_id,), row_factory=namedtuple_factory).rating
         if rating is None:
             if default_if_not_exist:
                 return _DEFAULT_VC_RATING
@@ -1057,21 +989,12 @@ class UserDbConn:
 
     def get_vc_rating_history(self, user_id: str):
         """Return [vc_id, rating]."""
-        query = (
-            "SELECT vc_id, rating "
-            "FROM rated_vc_users "
-            "WHERE user_id = ? AND rating IS NOT NULL"
-        )
-        ratings = self._fetchall(
-            query, params=(user_id,), row_factory=namedtuple_factory
-        )
+        query = "SELECT vc_id, rating " "FROM rated_vc_users " "WHERE user_id = ? AND rating IS NOT NULL"
+        ratings = self._fetchall(query, params=(user_id,), row_factory=namedtuple_factory)
         return ratings
 
     def set_rated_vc_channel(self, guild_id, channel_id):
-        query = (
-            "INSERT OR REPLACE INTO rated_vc_settings "
-            " (guild_id, channel_id) VALUES (?, ?)"
-        )
+        query = "INSERT OR REPLACE INTO rated_vc_settings " " (guild_id, channel_id) VALUES (?, ?)"
         with self.conn:
             self.conn.execute(query, (guild_id, channel_id))
 
@@ -1081,21 +1004,14 @@ class UserDbConn:
         return int(channel_id[0]) if channel_id else None
 
     def remove_last_ratedvc_participation(self, user_id: str):
-        query = (
-            "SELECT MAX(vc_id) AS vc_id " "FROM rated_vc_users " "WHERE user_id = ? "
-        )
-        vc_id = self._fetchone(
-            query, params=(user_id,), row_factory=namedtuple_factory
-        ).vc_id
+        query = "SELECT MAX(vc_id) AS vc_id " "FROM rated_vc_users " "WHERE user_id = ? "
+        vc_id = self._fetchone(query, params=(user_id,), row_factory=namedtuple_factory).vc_id
         query = "DELETE FROM rated_vc_users " "WHERE user_id = ? AND vc_id = ? "
         with self.conn:
             return self.conn.execute(query, (user_id, vc_id)).rowcount
 
     def set_training_channel(self, guild_id, channel_id):
-        query = (
-            "INSERT OR REPLACE INTO training_settings "
-            " (guild_id, channel_id) VALUES (?, ?)"
-        )
+        query = "INSERT OR REPLACE INTO training_settings " " (guild_id, channel_id) VALUES (?, ?)"
         with self.conn:
             self.conn.execute(query, (guild_id, channel_id))
 
@@ -1178,9 +1094,7 @@ class UserDbConn:
         training_id, mode, score, lives, time_left = res
         return training_id, None, None, None, None, None, mode, score, lives, time_left
 
-    def end_current_training_problem(
-        self, training_id, finish_time, status, score, lives, time_left
-    ):
+    def end_current_training_problem(self, training_id, finish_time, status, score, lives, time_left):
         query1 = f"""
             UPDATE training_problems SET finish_time = ?, status = ?
             WHERE training_id = ? AND status = {TrainingProblemStatus.ACTIVE}
@@ -1294,10 +1208,7 @@ class UserDbConn:
     ### Lockout round
 
     def set_round_channel(self, guild_id, channel_id):
-        query = (
-            "INSERT OR REPLACE INTO round_settings "
-            " (guild_id, channel_id) VALUES (?, ?)"
-        )
+        query = "INSERT OR REPLACE INTO round_settings " " (guild_id, channel_id) VALUES (?, ?)"
         with self.conn:
             self.conn.execute(query, (guild_id, channel_id))
 
@@ -1306,9 +1217,7 @@ class UserDbConn:
         channel_id = self.conn.execute(query, (guild_id,)).fetchone()
         return int(channel_id[0]) if channel_id else None
 
-    def create_ongoing_round(
-        self, guild_id, timestamp, users, rating, points, problems, duration, repeat
-    ):
+    def create_ongoing_round(self, guild_id, timestamp, users, rating, points, problems, duration, repeat):
         query = f"""
             INSERT INTO lockout_ongoing_rounds (guild, users, rating, points, time, problems, status, duration, repeat, times)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -1491,6 +1400,18 @@ class UserDbConn:
             )
             for data in res
         ]
+
+    def check_or_create_last_solved(self, discord_id):
+        query_select = "SELECT time FROM last_solved WHERE discord_id = ?"
+        query_insert = "INSERT INTO last_solved (discord_id, time) VALUES (?, ?)"
+        current_time = int(time.time())
+
+        res = self.conn.execute(query_select, (discord_id,)).fetchone()
+        if res is None:
+            with self.conn:
+                self.conn.execute(query_insert, (discord_id, current_time))
+            return current_time
+        return res[0]
 
     def close(self):
         self.conn.close()
