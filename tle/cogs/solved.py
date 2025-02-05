@@ -80,8 +80,8 @@ class Solved(commands.Cog):
                                 embed.add_field(name="Solved", value=msg, inline=True)
                                 embed.add_field(name="Rating", value=problem.get("rating", "XXXX"))
 
-                                t = ", ".join(problem["tags"])
-                                embed.add_field(name="Tags", value=t, inline=True) if t else "None"
+                                t = ", ".join(problem["tags"]) or "None"
+                                embed.add_field(name="Tags", value=t, inline=True)
 
                             if problems:
                                 embed.set_author(
