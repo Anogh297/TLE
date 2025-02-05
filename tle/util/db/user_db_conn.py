@@ -1401,10 +1401,11 @@ class UserDbConn:
             for data in res
         ]
 
-    def check_or_create_last_solved(self, discord_id):
+    def get_last_solved_time(self, discord_id):
         query_select = "SELECT time FROM last_solved WHERE discord_id = ?"
         query_insert = "INSERT INTO last_solved (discord_id, time) VALUES (?, ?)"
         current_time = int(time.time())
+        # current_time = 1738719736
 
         res = self.conn.execute(query_select, (discord_id,)).fetchone()
         if res is None:
@@ -1412,6 +1413,11 @@ class UserDbConn:
                 self.conn.execute(query_insert, (discord_id, current_time))
             return current_time
         return res[0]
+
+    def update_last_solved_time(self, discord_id, current_time):
+        query = "UPDATE last_solved SET time = ? WHERE discord_id = ?"
+        with self.conn:
+            self.conn.execute(query, (current_time, discord_id))
 
     def close(self):
         self.conn.close()
