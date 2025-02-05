@@ -90,7 +90,7 @@ class Solved(commands.Cog):
                                     icon_url=user.display_avatar.url if user.display_avatar else None,  # handle None case
                                 )
                                 embed.timestamp = curr_time
-                                await self.bot.get_channel(int("1326086236443643914")).send(embed=embed)
+                                await self.bot.get_channel(int("1276595437515833491")).send(embed=embed)
                                 cf_common.user_db.update_last_solved_time(id, int(curr_time.timestamp()))
 
     @commands.command()
