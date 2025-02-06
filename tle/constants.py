@@ -29,6 +29,8 @@ TLE_MODERATOR = os.environ.get("TLE_MODERATOR", "Moderator")
 
 OWNER = int(os.environ.get("BOT_OWNER"))
 
+SOLVED_CHANNEL = os.environ.get("SOLVED_CHANNEL")
+
 
 def is_me():
     def predicate(ctx):
