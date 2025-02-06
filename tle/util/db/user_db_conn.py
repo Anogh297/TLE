@@ -937,7 +937,7 @@ class UserDbConn:
         start_time: float,
         finish_time: float,
         guild_id: str,
-        user_ids: [str],
+        user_ids: list[str],
     ):
         """Creates a rated vc and returns its id."""
         query = "INSERT INTO rated_vcs " "(contest_id, start_time, finish_time, status, guild_id) " "VALUES ( ?, ?, ?, ?, ?)"
