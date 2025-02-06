@@ -5,6 +5,7 @@ from discord import Embed, User
 from discord.ext import commands, tasks
 from datetime import timezone, timedelta
 from tle.util import codeforces_common as cf_common, discord_common
+from tle import constants
 
 GYM_ID_THRESHOLD = 100000
 
@@ -16,8 +17,8 @@ class Solved(commands.Cog):
     @commands.Cog.listener()
     # @discord_common.once
     async def on_ready(self):
-        print(f"{self.bot.user} has connected to Discord! Starting role updates")
-        self.check_for_updates.start()
+        if constants.SOLVED_CHANNEL:
+            self.check_for_updates.start()
 
     @staticmethod
     def convert_to_unix_time(time_str, date_str=None):  # Added date_str parameter
@@ -66,8 +67,6 @@ class Solved(commands.Cog):
                                 if x["creationTimeSeconds"] > prev_time and (x["verdict"] == "OK" or x["verdict"] == "PARTIAL")
                             ]
                             for p in problems:
-                                p_keys = ", ".join(p.keys())
-                                print(f"Keys in p: {p_keys}")
                                 problem = p.get("problem")
                                 msg = (
                                     f"[{problem['name']}]"
@@ -76,7 +75,7 @@ class Solved(commands.Cog):
                                 )
 
                                 if p["verdict"] == "PARTIAL":
-                                    msg += f"({p.points} points)"
+                                    msg += f"({p['points']}) points)"
                                 embed.add_field(name="Solved", value=msg, inline=True)
                                 embed.add_field(name="Rating", value=problem.get("rating", "XXXX"))
 
@@ -87,7 +86,7 @@ class Solved(commands.Cog):
                                 embed.set_author(
                                     name=handle,
                                     url=f"https://codeforces.com/profile/{handle}",
-                                    icon_url=user.display_avatar.url if user.display_avatar else None,  # handle None case
+                                    icon_url=user.display_avatar.url if user.display_avatar else None,
                                 )
                                 embed.timestamp = curr_time
                                 await self.bot.get_channel(int("1276595437515833491")).send(embed=embed)
