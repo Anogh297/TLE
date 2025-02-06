@@ -13,12 +13,12 @@ GYM_ID_THRESHOLD = 100000
 class Solved(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.SOLVED_CHANNEL = constants.SOLVED_CHANNEL or None
 
     @commands.Cog.listener()
     @discord_common.once
     async def on_ready(self):
-        if constants.SOLVED_CHANNEL:
-            print("Checking for solved updates...")
+        if self.SOLVED_CHANNEL:
             self.check_for_updates.start()
 
     @staticmethod
@@ -65,12 +65,9 @@ class Solved(commands.Cog):
                             problems = [
                                 x
                                 for x in data["result"]
-                                if x["creationTimeSeconds"] > prev_time and (x["verdict"] == "OK" or x["verdict"] == "PARTIAL")
+                                if x["creationTimeSeconds"] > prev_time and (x["verdict"] == "OK" or (x["verdict"] == "PARTIAL" and x["points"] > 0))
                             ]
                             for p in problems:
-                                if p["verdict"] == "PARTIAL" and p["points"] <= 0:
-                                    continue
-
                                 problem = p.get("problem")
                                 msg = (
                                     f"[{problem['name']}]"
@@ -83,7 +80,8 @@ class Solved(commands.Cog):
                                 embed.add_field(name="Solved", value=msg, inline=True)
                                 embed.add_field(name="Rating", value=problem.get("rating", "XXXX"))
 
-                                t = ", ".join(problem["tags"]) or "None"
+                                t = ", ".join(problem["tags"])
+                                t = f"||{t}||" if t else "None"
                                 embed.add_field(name="Tags", value=t, inline=True)
 
                             if problems:
@@ -93,7 +91,7 @@ class Solved(commands.Cog):
                                     icon_url=user.display_avatar.url if user.display_avatar else None,
                                 )
                                 embed.timestamp = curr_time
-                                await self.bot.get_channel(int("1276595437515833491")).send(embed=embed)
+                                await self.bot.get_channel(int(self.SOLVED_CHANNEL)).send(embed=embed)
                                 cf_common.user_db.update_last_solved_time(id, int(curr_time.timestamp()))
 
     @commands.command()
