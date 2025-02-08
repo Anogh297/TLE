@@ -45,7 +45,7 @@ class Solved(commands.Cog):
     # @tasks.loop(seconds=60)
     @tasks.task_spec(
         name="SolvedUpdate",
-        waiter=tasks.Waiter.fixed_delay(15),
+        waiter=tasks.Waiter.fixed_delay(30),
     )
     async def check_for_updates(self, _):
         for guild in self.bot.guilds:
