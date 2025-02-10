@@ -11,7 +11,7 @@ GYM_ID_THRESHOLD = 100000
 
 
 class Solved(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.SOLVED_CHANNEL = constants.SOLVED_CHANNEL or None
 
@@ -22,18 +22,18 @@ class Solved(commands.Cog):
             self.check_for_updates.start()
 
     @staticmethod
-    def convert_to_unix_time(time_str, date_str=None):  # Added date_str parameter
+    def convert_to_unix_time(time_str, date_str=None):
         """Converts military time (GMT+6) to a Unix timestamp (UTC)."""
 
         if date_str is None:
-            date_str = datetime.date.today().strftime("%Y-%m-%d")  # Default to today's date
+            date_str = datetime.date.today().strftime("%Y-%m-%d")
 
         try:
-            dt_gmt6 = datetime.datetime.strptime(date_str + " " + time_str, "%Y-%m-%d %H%M")  # Parse with date
+            dt_gmt6 = datetime.datetime.strptime(date_str + " " + time_str, "%Y-%m-%d %H%M")
         except ValueError:
             raise ValueError("Invalid date or time format. Use YYYY-MM-DD HHMM")
 
-        dt_utc = dt_gmt6.replace(tzinfo=timezone(timedelta(hours=6))).astimezone(timezone.utc)  # Correct timezone handling
+        dt_utc = dt_gmt6.replace(tzinfo=timezone(timedelta(hours=6))).astimezone(timezone.utc)
         return int(dt_utc.timestamp())
 
     @staticmethod
@@ -42,7 +42,6 @@ class Solved(commands.Cog):
         dt = datetime.datetime.strptime(time_str, "%H%M")
         return dt.strftime("%I:%M %p")
 
-    # @tasks.loop(seconds=60)
     @tasks.task_spec(
         name="SolvedUpdate",
         waiter=tasks.Waiter.fixed_delay(30),
@@ -64,23 +63,24 @@ class Solved(commands.Cog):
                             embed = Embed()
                             problems = [
                                 x
-                                for x in data["result"]
-                                if x["creationTimeSeconds"] > prev_time and (x["verdict"] == "OK" or (x["verdict"] == "PARTIAL" and x["points"] > 0))
+                                for x in data.get("result")
+                                if x.get("creationTimeSeconds", 0) > prev_time
+                                and (x.get("verdict") == "OK" or (x.get("verdict") == "PARTIAL" and x.get("points", 0) > 0))
                             ]
                             for p in problems:
                                 problem = p.get("problem")
                                 msg = (
-                                    f"[{problem['name']}]"
-                                    f"(https://codeforces.com/{'contest' if problem['contestId'] < GYM_ID_THRESHOLD else 'gym'}/"
-                                    f"{problem['contestId']}/problem/{problem['index']})"
+                                    f"[{problem.get('name')}]"
+                                    f"(https://codeforces.com/{'contest' if problem.get('contestId') < GYM_ID_THRESHOLD else 'gym'}/"
+                                    f"{problem.get('contestId')}/problem/{problem.get('index')})"
                                 )
 
-                                if p["verdict"] == "PARTIAL":
-                                    msg += f" ({p['points']} points)"
+                                if p.get("verdict") == "PARTIAL":
+                                    msg += f" ({p.get('points')} points)"
                                 embed.add_field(name="Solved", value=msg, inline=True)
                                 embed.add_field(name="Rating", value=problem.get("rating", "XXXX"))
 
-                                t = ", ".join(problem["tags"])
+                                t = ", ".join(problem.get("tags"))
                                 t = f"||{t}||" if t else "None"
                                 embed.add_field(name="Tags", value=t, inline=True)
 
