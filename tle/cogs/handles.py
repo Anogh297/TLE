@@ -853,16 +853,16 @@ class Handles(commands.Cog):
             )
             top_increases_str.append(increase_str)
 
+        embed_heading = discord.Embed(title=contest.name, url=contest.url, description="")
+        embed_heading.set_author(name="Rank updates")
+        embeds = [embed_heading]
+
         # rank_changes_str = rank_changes_str or ["No rank changes"]
         if rank_changes_str != []:
             for rank_changes_chunk in paginator.chunkify(rank_changes_str, _MAX_RATING_CHANGES_PER_EMBED):
                 desc = "\n".join(rank_changes_chunk)
                 embed = discord.Embed(description=desc)
                 embeds.append(embed)
-
-        embed_heading = discord.Embed(title=contest.name, url=contest.url, description="")
-        embed_heading.set_author(name="Rank updates")
-        embeds = [embed_heading]
 
         top_rating_increases_embed = discord.Embed(description="\n".join(top_increases_str) or "Nobody got a delta :(")
         top_rating_increases_embed.set_author(name="Top rating changes")

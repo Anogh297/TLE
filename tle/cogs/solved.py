@@ -67,6 +67,8 @@ class Solved(commands.Cog):
                                 if x.get("creationTimeSeconds", 0) > prev_time
                                 and (x.get("verdict") == "OK" or (x.get("verdict") == "PARTIAL" and x.get("points", 0) > 0))
                             ]
+
+                            problems = problems[:5]
                             for p in problems:
                                 problem = p.get("problem")
                                 msg = (
